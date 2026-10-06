@@ -1,0 +1,42 @@
+name: avora_mobile
+description: "Avora OTA - Mobile Client Application"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ── Network ──────────────────────────────────────────────
+  dio: ^5.7.0                    # HTTP client với interceptor
+
+  # ── State Management ─────────────────────────────────────
+  flutter_riverpod: ^2.6.1      # Riverpod cho state management
+
+  # ── Secure Storage ───────────────────────────────────────
+  flutter_secure_storage: ^9.2.2 # Lưu JWT token bảo mật
+
+  # ── Navigation ───────────────────────────────────────────
+  go_router: ^14.6.1            # Declarative routing
+
+  # ── Model Utilities ──────────────────────────────────────
+  equatable: ^2.0.5             # Value equality cho models
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # ── Mocking ──────────────────────────────────────────────
+  mockito: ^5.4.4               # Mock cho unit test
+  build_runner: ^2.4.13         # Codegen cho mockito
+
+flutter:
+  uses-material-design: true
