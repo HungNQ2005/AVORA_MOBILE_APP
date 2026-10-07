@@ -69,32 +69,110 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   // ── Listen to State Changes ────────────────────────────────────────────────
   void _handleStateChange(AuthState? previous, AuthState next) {
-    if (next is AuthSignUpSuccess) {
-      // Hiển thị thông báo kiểm tra email và quay về Login
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Đăng ký thành công! Vui lòng kiểm tra email ${next.email} để kích hoạt tài khoản.',
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (next is AuthSignUpSuccess) {
+        // Hiển thị Dialog thông báo đăng ký thành công và yêu cầu kích hoạt qua email
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            icon: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.mark_email_read_outlined,
+                color: Color(0xFF16A34A),
+                size: 36,
+              ),
+            ),
+            title: const Text(
+              'Đăng ký tài khoản thành công!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF475569), height: 1.5),
+                    children: [
+                      const TextSpan(text: 'Tài khoản cho email '),
+                      TextSpan(
+                        text: next.email,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                      ),
+                      const TextSpan(text: ' đã được tạo thành công.'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline, color: Color(0xFF16A34A), size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Vui lòng kiểm tra hộp thư email (bao gồm cả thư mục Spam/Rác) và nhấn vào liên kết kích hoạt trước khi đăng nhập.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF166534), height: 1.45),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  ref.read(authNotifierProvider.notifier).reset();
+                  context.go(AppRoutes.login);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                ),
+                child: const Text('Đến trang Đăng nhập', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-          backgroundColor: const Color(0xFF16A34A),
-          duration: const Duration(seconds: 5),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      // Chuyển về Login sau khi signup
-      context.go(AppRoutes.login);
-    } else if (next is AuthError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(next.message),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      ref.read(authNotifierProvider.notifier).reset();
-    }
+        );
+      } else if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        ref.read(authNotifierProvider.notifier).reset();
+      }
+    });
   }
 
   @override

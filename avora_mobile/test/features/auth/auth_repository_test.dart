@@ -248,6 +248,56 @@ void main() {
     });
   });
 
+  // ─── forgotPassword Tests ──────────────────────────────────────────────────
+  group('AuthRepository.forgotPassword()', () {
+    const testEmail = 'user@avora.vn';
+
+    test('✅ forgotPassword thành công → trả về message xác nhận', () async {
+      when(
+        mockDio.post('/auth/forgot-password', data: anyNamed('data')),
+      ).thenAnswer(
+        (_) async => Response(
+          data: {
+            'status': 'success',
+            'message': 'Đã gửi email kèm liên kết đặt lại mật khẩu.',
+            'data': {'email': testEmail},
+          },
+          statusCode: 200,
+          requestOptions: RequestOptions(path: '/auth/forgot-password'),
+        ),
+      );
+
+      final result = await repository.forgotPassword(email: testEmail);
+
+      expect(result, equals('Đã gửi email kèm liên kết đặt lại mật khẩu.'));
+    });
+
+    test('❌ forgotPassword tài khoản không tồn tại → throw ApiException', () async {
+      when(
+        mockDio.post('/auth/forgot-password', data: anyNamed('data')),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/auth/forgot-password'),
+          type: DioExceptionType.badResponse,
+          response: Response(
+            statusCode: 404,
+            data: {'status': 'error', 'message': 'Không tìm thấy tài khoản với email này.'},
+            requestOptions: RequestOptions(path: '/auth/forgot-password'),
+          ),
+          error: const ApiException(
+            message: 'Không tìm thấy tài khoản với email này.',
+            statusCode: 404,
+          ),
+        ),
+      );
+
+      expect(
+        () => repository.forgotPassword(email: 'notfound@avora.vn'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
   // ─── signOut Tests ─────────────────────────────────────────────────────────
   group('AuthRepository.signOut()', () {
     test('✅ signOut → xóa token khỏi storage', () async {
