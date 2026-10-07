@@ -181,7 +181,71 @@ void main() {
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '⚠️ Login tài khoản chưa verify → hiển thị Dialog Xác thực tài khoản',
+      (tester) async {
+        final fakeNotifier = _MockAuthNotifier();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authNotifierProvider.overrideWith((_) => fakeNotifier),
+            ],
+            child: MaterialApp(
+              theme: AvoraTheme.lightTheme,
+              home: const LoginScreen(),
+            ),
+          ),
+        );
+
+        // Emit AuthError with ACCOUNT_VERIFYING
+        fakeNotifier.emitError('Tài khoản chưa được kích hoạt email.', 'ACCOUNT_VERIFYING');
+        await tester.pumpAndSettle();
+
+        expect(find.text('Xác thực tài khoản'), findsOneWidget);
+        expect(find.text('Tài khoản chưa được kích hoạt email.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '🚫 Login tài khoản bị khóa → hiển thị Dialog Tài khoản đã bị khóa',
+      (tester) async {
+        final fakeNotifier = _MockAuthNotifier();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authNotifierProvider.overrideWith((_) => fakeNotifier),
+            ],
+            child: MaterialApp(
+              theme: AvoraTheme.lightTheme,
+              home: const LoginScreen(),
+            ),
+          ),
+        );
+
+        // Emit AuthError with ACCOUNT_DEACTIVATED
+        fakeNotifier.emitError('Tài khoản của bạn đã bị vô hiệu hóa.', 'ACCOUNT_DEACTIVATED');
+        await tester.pumpAndSettle();
+
+        expect(find.text('Tài khoản đã bị khóa'), findsOneWidget);
+        expect(find.text('Tài khoản của bạn đã bị vô hiệu hóa.'), findsOneWidget);
+      },
+    );
   });
+}
+
+class _MockAuthNotifier extends AuthNotifier {
+  _MockAuthNotifier()
+      : super(
+          AuthRepository(
+            dio: Dio(),
+            storage: _FakeSecureStorage(),
+          ),
+        );
+
+  void emitError(String message, String code) {
+    state = AuthError(message, code: code);
+  }
 }
 
 // ─── Fake NotiFier cho test Loading State ────────────────────────────────────

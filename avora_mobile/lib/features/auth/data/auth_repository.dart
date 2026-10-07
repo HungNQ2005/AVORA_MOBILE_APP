@@ -111,6 +111,33 @@ class AuthRepository {
     }
   }
 
+  // ── Forgot Password ────────────────────────────────────────────────────────
+
+  /// Gọi `POST /api/auth/forgot-password`.
+  /// Yêu cầu gửi link đặt lại mật khẩu về email.
+  Future<String> forgotPassword({required String email}) async {
+    try {
+      final response = await _dio.post(
+        '/auth/forgot-password',
+        data: {'email': email},
+      );
+
+      final Map<String, dynamic> rawJson = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : Map<String, dynamic>.from(response.data as Map);
+
+      return rawJson['message']?.toString() ??
+          'Đã gửi email kèm liên kết đặt lại mật khẩu. Vui lòng kiểm tra hộp thư của bạn.';
+    } on DioException catch (e) {
+      if (e.error is ApiException) throw e.error as ApiException;
+      throw ApiException(message: e.message ?? 'Lỗi kết nối.');
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(message: 'Lỗi xử lý dữ liệu: $e');
+    }
+  }
+
   // ── Sign Out ───────────────────────────────────────────────────────────────
 
   /// Xóa token khỏi secure storage (logout phía client).

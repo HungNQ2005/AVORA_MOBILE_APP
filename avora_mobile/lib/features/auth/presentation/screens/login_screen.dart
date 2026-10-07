@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/router/app_router.dart';
+import 'forgot_password_modal.dart';
 
 /// Màn hình Đăng nhập.
 /// Xử lý UI, form validation và lắng nghe AuthState từ Riverpod.
@@ -52,69 +53,106 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // ── Listen to State Changes ────────────────────────────────────────────────
   void _handleStateChange(AuthState? previous, AuthState next) {
-    if (next is AuthSuccess) {
-      // Chuyển hướng sang Home khi đăng nhập thành công
-      context.go(AppRoutes.home);
-    } else if (next is AuthError) {
-      final upperCode = next.code?.toUpperCase();
+    // Dùng addPostFrameCallback để đảm bảo showDialog/navigate
+    // được gọi SAU khi frame build hiện tại hoàn tất,
+    // tránh dialog bị hủy do widget tree rebuild.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-      if (upperCode == 'ACCOUNT_DEACTIVATED') {
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.block, color: Color(0xFFEF4444), size: 36),
-            title: const Text(
-              'Tài khoản bị vô hiệu hóa',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              next.message,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+      if (next is AuthSuccess) {
+        context.go(AppRoutes.home);
+      } else if (next is AuthError) {
+        final upperCode = (next.code ?? '').toUpperCase();
+        final upperMsg = next.message.toUpperCase();
+        final isDeactivated = upperCode.contains('DEACTIVATED') ||
+            upperMsg.contains('VÔ HIỆU HÓA') ||
+            upperMsg.contains('BỊ KHÓA') ||
+            upperMsg.contains('DEACTIVATED');
+        final isVerifying = upperCode.contains('VERIFYING') ||
+            upperMsg.contains('CHƯA KÍCH HOẠT') ||
+            upperMsg.contains('XÁC THỰC') ||
+            upperMsg.contains('VERIFYING');
+
+        if (isDeactivated) {
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              icon: const Icon(Icons.block_rounded, color: Color(0xFFEF4444), size: 44),
+              title: const Text(
+                'Tài khoản đã bị khóa',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
               ),
-            ],
-          ),
-        );
-      } else if (upperCode == 'ACCOUNT_VERIFYING') {
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            icon: const Icon(Icons.mark_email_unread_outlined, color: Color(0xFF0284C7), size: 36),
-            title: const Text(
-              'Xác thực tài khoản',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              next.message,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Text(
+                next.message,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF475569), height: 1.5),
+                textAlign: TextAlign.center,
               ),
-            ],
-          ),
-        );
-      } else {
-        // Hiển thị Snackbar lỗi thông thường
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    ref.read(authNotifierProvider.notifier).reset();
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  ),
+                  child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        } else if (isVerifying) {
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              icon: const Icon(Icons.mark_email_unread_outlined, color: Color(0xFF0284C7), size: 44),
+              title: const Text(
+                'Xác thực tài khoản',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              content: Text(
+                next.message,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF475569), height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    ref.read(authNotifierProvider.notifier).reset();
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  ),
+                  child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.message),
+              backgroundColor: const Color(0xFFEF4444),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          ref.read(authNotifierProvider.notifier).reset();
+        }
       }
-      // Reset state sau khi hiển thị lỗi
-      ref.read(authNotifierProvider.notifier).reset();
-    }
+    });
   }
 
   @override
@@ -176,7 +214,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   validator: _validatePassword,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+
+                // ── Forgot Password Link ─────────────────────────────────────
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    key: const Key('login_forgot_password_button'),
+                    onPressed: () => ForgotPasswordModal.show(
+                      context,
+                      initialEmail: _emailController.text.trim(),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    ),
+                    child: const Text(
+                      'Quên mật khẩu?',
+                      style: TextStyle(
+                        color: Color(0xFF0284C7),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // ── Login Button ─────────────────────────────────────────────
                 ElevatedButton(

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/secure_storage.dart';
@@ -65,6 +66,15 @@ class _ErrorInterceptor extends Interceptor {
     String? rawMessage;
     if (responseData is Map) {
       rawMessage = responseData['message']?.toString();
+    } else if (responseData is String) {
+      try {
+        final dynamic decoded = jsonDecode(responseData);
+        if (decoded is Map) {
+          rawMessage = decoded['message']?.toString();
+        }
+      } catch (_) {
+        rawMessage = responseData;
+      }
     }
 
     final friendlyMessage = _mapErrorMessage(rawMessage, err.type);
