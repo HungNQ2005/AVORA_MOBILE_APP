@@ -32,13 +32,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     final favoriteHotels = homeState.hotels
         .where((h) => favoriteIds.contains(h.hotelId))
         .where((h) {
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      final name = h.name.toLowerCase();
-      final city = (h.cityName ?? '').toLowerCase();
-      final addr = (h.address ?? '').toLowerCase();
-      return name.contains(q) || city.contains(q) || addr.contains(q);
-    }).toList();
+          if (_searchQuery.isEmpty) return true;
+          final q = _searchQuery.toLowerCase();
+          final name = h.name.toLowerCase();
+          final city = (h.cityName ?? '').toLowerCase();
+          final addr = (h.address ?? '').toLowerCase();
+          return name.contains(q) || city.contains(q) || addr.contains(q);
+        })
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -46,6 +47,18 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         backgroundColor: const Color(0xFF003580),
         foregroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          key: const Key('favorites_back_button'),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          tooltip: 'Quay lại',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -62,7 +75,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         actions: [
           if (favoriteIds.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined, color: Colors.white),
+              icon: const Icon(
+                Icons.delete_sweep_outlined,
+                color: Colors.white,
+              ),
               tooltip: 'Xóa tất cả',
               onPressed: () => _confirmClearAll(context),
             ),
@@ -78,12 +94,16 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                      onChanged: (val) =>
+                          setState(() => _searchQuery = val.trim()),
                       decoration: InputDecoration(
                         hintText: 'Tìm kiếm trong danh sách đã lưu...',
                         hintStyle: const TextStyle(fontSize: 13),
-                        prefixIcon: const Icon(Icons.search,
-                            color: Color(0xFF0284C7), size: 20),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF0284C7),
+                          size: 20,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Icons.clear, size: 18),
@@ -95,14 +115,20 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                             : null,
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                       ),
                     ),
@@ -116,7 +142,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     child: Center(
                       child: Text(
                         'Không tìm thấy khách sạn phù hợp với từ khóa.',
-                        style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   )
@@ -125,13 +154,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.all(16),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final hotel = favoriteHotels[index];
-                          return _buildFavoriteHotelCard(context, hotel);
-                        },
-                        childCount: favoriteHotels.length,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final hotel = favoriteHotels[index];
+                        return _buildFavoriteHotelCard(context, hotel);
+                      }, childCount: favoriteHotels.length),
                     ),
                   ),
               ],
@@ -179,19 +205,32 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
             const Text(
               'Nhấn vào biểu tượng trái tim ở bất kỳ khách sạn nào để lưu lại danh sách yêu thích cho chuyến đi sắp tới.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF003580),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onPressed: () => context.pop(),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/home');
+                }
+              },
               icon: const Icon(Icons.travel_explore, size: 18),
               label: const Text(
                 'Khám phá khách sạn ngay',
@@ -206,7 +245,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
 
   /// Thẻ khách sạn yêu thích
   Widget _buildFavoriteHotelCard(BuildContext context, HotelModel hotel) {
-    final imageSrc = hotel.thumbnail ??
+    final imageSrc =
+        hotel.thumbnail ??
         (hotel.images.isNotEmpty ? hotel.images.first : null) ??
         'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
 
@@ -248,9 +288,13 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 right: 10,
                 child: InkWell(
                   onTap: () {
-                    ref.read(homeProvider.notifier).toggleFavorite(hotel.hotelId);
+                    ref
+                        .read(homeProvider.notifier)
+                        .toggleFavorite(hotel.hotelId);
                     showHomeSnackBar(
-                        context, 'Đã xóa ${hotel.name} khỏi danh sách yêu thích');
+                      context,
+                      'Đã xóa ${hotel.name} khỏi danh sách yêu thích',
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(7),
@@ -277,8 +321,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 top: 10,
                 left: 10,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.65),
                     borderRadius: BorderRadius.circular(6),
@@ -286,7 +332,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star, size: 12, color: Color(0xFFFBBF24)),
+                      const Icon(
+                        Icons.star,
+                        size: 12,
+                        color: Color(0xFFFBBF24),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${hotel.starQuality} sao',
@@ -325,7 +375,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 3),
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF003580),
                         borderRadius: BorderRadius.circular(5),
@@ -344,8 +396,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on,
-                        size: 13, color: Color(0xFF0284C7)),
+                    const Icon(
+                      Icons.location_on,
+                      size: 13,
+                      color: Color(0xFF0284C7),
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -353,7 +408,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF64748B)),
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                     ),
                   ],
@@ -378,7 +435,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         ),
                         const Text(
                           'đã bao gồm thuế & phí',
-                          style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF64748B),
+                          ),
                         ),
                       ],
                     ),
@@ -390,16 +450,23 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         minimumSize: Size.zero,
                       ),
                       onPressed: () {
-                        showHomeSnackBar(context,
-                            'Đang mở trang chi tiết đặt phòng cho ${hotel.name}');
+                        showHomeSnackBar(
+                          context,
+                          'Đang mở trang chi tiết đặt phòng cho ${hotel.name}',
+                        );
                       },
                       child: const Text(
                         'Đặt phòng ngay',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -419,7 +486,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Xóa danh sách yêu thích'),
         content: const Text(
-            'Bạn có chắc chắn muốn xóa toàn bộ khách sạn khỏi danh sách yêu thích?'),
+          'Bạn có chắc chắn muốn xóa toàn bộ khách sạn khỏi danh sách yêu thích?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -437,7 +505,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
               }
               showHomeSnackBar(context, 'Đã xóa toàn bộ danh sách yêu thích.');
             },
-            child: const Text('Xóa tất cả', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Xóa tất cả',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
