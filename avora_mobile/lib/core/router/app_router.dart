@@ -5,7 +5,6 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
-import '../../features/ai_chat/presentation/screens/ai_chat_screen.dart';
 import '../../features/favorites/presentation/screens/favorites_screen.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────
@@ -13,7 +12,6 @@ class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
-  static const String aiChat = '/ai-chat';
   static const String favorites = '/favorites';
 }
 
@@ -83,11 +81,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.home,
         name: 'home',
         builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.aiChat,
-        name: 'aiChat',
-        builder: (context, state) => const AiChatScreen(),
       ),
       GoRoute(
         path: AppRoutes.favorites,
