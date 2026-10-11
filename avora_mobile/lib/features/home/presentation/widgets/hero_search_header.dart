@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:avora_mobile/core/router/app_router.dart';
+import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 import '../providers/home_provider.dart';
 import 'guest_room_picker_sheet.dart';
-import 'home_helpers.dart';
 
 /// Hero banner kèm hộp tìm kiếm (điểm đến, ngày, khách & phòng).
 class HeroSearchHeader extends ConsumerStatefulWidget {
@@ -45,9 +47,9 @@ class _HeroSearchHeaderState extends ConsumerState<HeroSearchHeader> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -90,7 +92,7 @@ class _HeroSearchHeaderState extends ConsumerState<HeroSearchHeader> {
               border: Border.all(color: const Color(0xFFFBBF24), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -217,11 +219,15 @@ class _HeroSearchHeaderState extends ConsumerState<HeroSearchHeader> {
                       ),
                     ),
                     onPressed: () {
-                      final dest = state.destination.isEmpty
-                          ? 'toàn quốc'
-                          : state.destination;
-                      showHomeSnackBar(context,
-                          'Đang tìm khách sạn tại $dest (${state.nights} đêm, ${state.adults} khách)...');
+                      final searchParams = HotelSearchParams(
+                        destination: state.destination,
+                        checkIn: state.checkIn,
+                        checkOut: state.checkOut,
+                        adults: state.adults,
+                        children: state.children,
+                        rooms: state.rooms,
+                      );
+                      context.push(AppRoutes.hotelSearch, extra: searchParams);
                     },
                   ),
                 ),
