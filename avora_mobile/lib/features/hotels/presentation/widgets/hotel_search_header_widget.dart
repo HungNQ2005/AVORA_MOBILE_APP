@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
 /// Thanh tìm kiếm thu gọn đặt ở đầu màn hình HotelSearchScreen.
@@ -75,12 +74,21 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
     widget.onSearch(updated);
   }
 
+  String _formatShortDateVN(DateTime d) {
+    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    final weekday = days[d.weekday % 7];
+    final day = d.day.toString().padLeft(2, '0');
+    final month = d.month.toString().padLeft(2, '0');
+    return '$weekday, $day TH$month';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd/MM');
-    final datesStr = '${dateFormat.format(_checkIn)} – ${dateFormat.format(_checkOut)}';
+    final datesStr =
+        '${_formatShortDateVN(_checkIn)} – ${_formatShortDateVN(_checkOut)}';
     final nights = _checkOut.difference(_checkIn).inDays;
-    final guestsStr = '$_adults khách • $_rooms phòng';
+    final guestsStr =
+        '$_adults người lớn · $_children trẻ em · $_rooms phòng';
 
     return Container(
       color: const Color(0xFF003580),
@@ -129,7 +137,7 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                                 children: [
                                   Text(
                                     _destinationController.text.isEmpty
-                                        ? 'Tất cả địa điểm tại Việt Nam'
+                                        ? 'Nhập thành phố hoặc tên khách sạn...'
                                         : _destinationController.text,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -183,14 +191,25 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                     ],
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Field 1: Destination
+                      const Text(
+                        'BẠN MUỐN ĐẾN ĐÂU?',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       TextField(
                         controller: _destinationController,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.location_on,
                               color: Color(0xFF0284C7)),
-                          hintText: 'Nhập tên thành phố hoặc khách sạn...',
+                          hintText: 'Nhập thành phố hoặc tên khách sạn...',
                           isDense: true,
                           suffixIcon: _destinationController.text.isNotEmpty
                               ? IconButton(
@@ -207,15 +226,25 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                       const SizedBox(height: 10),
 
                       // Field 2: Dates Picker
+                      const Text(
+                        'NGÀY NHẬN PHÒNG – NGÀY TRẢ PHÒNG',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       InkWell(
                         onTap: _pickDates,
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                              horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             border: Border.all(color: const Color(0xFFBAE6FD)),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             color: const Color(0xFFF0F9FF),
                           ),
                           child: Row(
@@ -225,16 +254,30 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  '$datesStr ($nights đêm)',
+                                  datesStr,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF0F172A),
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios,
-                                  size: 14, color: Color(0xFF64748B)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF003580),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '$nights đêm',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -242,15 +285,25 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                       const SizedBox(height: 10),
 
                       // Field 3: Guests & Rooms Picker
+                      const Text(
+                        'SỐ NGƯỜI VÀ PHÒNG',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       InkWell(
                         onTap: _pickGuestsAndRooms,
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                              horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             border: Border.all(color: const Color(0xFFBAE6FD)),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             color: const Color(0xFFF0F9FF),
                           ),
                           child: Row(
@@ -260,9 +313,9 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  '$_adults người lớn, $_children trẻ em • $_rooms phòng',
+                                  guestsStr,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF0F172A),
                                   ),
@@ -279,23 +332,30 @@ class _HotelSearchHeaderWidgetState extends State<HotelSearchHeaderWidget> {
                       // Submit Button
                       SizedBox(
                         width: double.infinity,
-                        height: 44,
+                        height: 42,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFB700),
-                            foregroundColor: const Color(0xFF003580),
+                            backgroundColor: const Color(0xFF003580),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             elevation: 0,
                           ),
                           onPressed: _submitSearch,
-                          child: const Text(
-                            'Tìm kiếm',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search, size: 18),
+                              SizedBox(width: 6),
+                              Text(
+                                'Tìm kiếm',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

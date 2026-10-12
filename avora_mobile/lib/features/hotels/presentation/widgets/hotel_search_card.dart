@@ -25,7 +25,8 @@ class HotelSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageSrc = hotel.thumbnail ??
+    final imageSrc =
+        hotel.thumbnail ??
         (hotel.images.isNotEmpty ? hotel.images.first : null) ??
         'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80';
 
@@ -56,8 +57,11 @@ class HotelSearchCard extends StatelessWidget {
                     errorBuilder: (_, _, _) => Container(
                       color: const Color(0xFFE2E8F0),
                       child: const Center(
-                        child: Icon(Icons.broken_image,
-                            color: Color(0xFF94A3B8), size: 40),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Color(0xFF94A3B8),
+                          size: 40,
+                        ),
                       ),
                     ),
                   ),
@@ -78,36 +82,14 @@ class HotelSearchCard extends StatelessWidget {
                       ),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color:
-                            isFavorite ? const Color(0xFFEF4444) : Colors.white,
+                        color: isFavorite
+                            ? const Color(0xFFEF4444)
+                            : Colors.white,
                         size: 20,
                       ),
                     ),
                   ),
                 ),
-
-                // Genius Badge Top Left
-                if (hotel.isGenius)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF003580),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Genius VIP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
 
                 // Bottom Tag (Summer discount / flash deal)
                 if (hotel.tag != null && hotel.tag!.isNotEmpty)
@@ -116,18 +98,25 @@ class HotelSearchCard extends StatelessWidget {
                     left: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF003580).withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                            color: const Color(0xFFFFB700), width: 1),
+                          color: const Color(0xFFFFB700),
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.local_offer,
-                              color: Color(0xFFFFB700), size: 12),
+                          const Icon(
+                            Icons.local_offer,
+                            color: Color(0xFFFFB700),
+                            size: 12,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             hotel.tag!,
@@ -150,74 +139,91 @@ class HotelSearchCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Row: Stars + Rating Badge
+                  // Row 1: Stars + Genius VIP + Score Block
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Star Rating Icons
-                      Row(
-                        children: List.generate(
-                          starCount,
-                          (index) => const Icon(Icons.star,
-                              size: 15, color: Color(0xFFF59E0B)),
-                        ),
-                      ),
-                      const Spacer(),
-
-                      // Review Score Badge (Booking.com style)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF003580),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          hotel.starRating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Hotel Name & Score Label
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                      // Stars and Genius VIP
                       Expanded(
-                        child: Text(
-                          hotel.name,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                            height: 1.25,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: 4,
+                          children: [
+                            ...List.generate(
+                              starCount,
+                              (index) => const Icon(
+                                Icons.star,
+                                size: 15,
+                                color: Color(0xFFF59E0B),
+                              ),
+                            ),
+                            if (hotel.isGenius) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFB700),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Genius VIP',
+                                  style: TextStyle(
+                                    color: Color(0xFF00224F),
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+
+                      // Review Score Block (Top Right)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            hotel.scoreLabel,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF003580),
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                hotel.scoreLabel,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF003580),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  hotel.starRating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             '${_currencyFormatter.format(hotel.reviewsCount)} đánh giá',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 10.5,
                               color: Color(0xFF64748B),
                             ),
                           ),
@@ -225,20 +231,39 @@ class HotelSearchCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+
+                  // Hotel Name
+                  Text(
+                    hotel.name,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF003580),
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 6),
 
                   // Location Pin + Address
                   Row(
                     children: [
-                      const Icon(Icons.location_on,
-                          size: 14, color: Color(0xFF006CE4)),
+                      const Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Color(0xFF006CE4),
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           hotel.address ?? hotel.cityName ?? 'Việt Nam',
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF475569),
+                            color: Color(0xFF006CE4),
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFF006CE4),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -248,43 +273,37 @@ class HotelSearchCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Highlighted Room Box (if available)
+                  // Highlighted Room Box
                   if (hotel.roomHighlight != null) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.king_bed_outlined,
-                              size: 16, color: Color(0xFF003580)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  hotel.roomHighlight!.name,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  '${hotel.roomHighlight!.bedType} • ${hotel.roomHighlight!.roomSize}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            hotel.roomHighlight!.name,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${hotel.roomHighlight!.bedType} · ${hotel.roomHighlight!.roomSize}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -293,85 +312,94 @@ class HotelSearchCard extends StatelessWidget {
                     const SizedBox(height: 8),
                   ],
 
-                  // Facilities / Amenities Tags (up to 3)
-                  if (hotel.facilities.isNotEmpty) ...[
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: hotel.facilities.take(3).map((f) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
+                  // Amenities / Features List (Vertical bullets with green checks)
+                  ...hotel.facilities
+                      .take(2)
+                      .map(
+                        (f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.check,
-                                  size: 12, color: Color(0xFF16A34A)),
-                              const SizedBox(width: 4),
-                              Text(
-                                f.name,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF334155),
+                              const Icon(
+                                Icons.check,
+                                size: 14,
+                                color: Color(0xFF16A34A),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  f.name,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF16A34A),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 6),
-                  ],
+                        ),
+                      ),
 
                   // Cancellation policy
-                  if (hotel.cancellationPolicy != null) ...[
-                    Row(
-                      children: [
-                        const Icon(Icons.event_available,
-                            size: 14, color: Color(0xFF16A34A)),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            hotel.cancellationPolicy!.description,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF16A34A),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  if (hotel.cancellationPolicy != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check,
+                            size: 14,
+                            color: Color(0xFF16A34A),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              hotel.cancellationPolicy!.description,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF16A34A),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                  ],
 
                   // Urgency: available rooms <= 5
                   if (hotel.availableRooms != null &&
                       hotel.availableRooms! > 0 &&
-                      hotel.availableRooms! <= 5) ...[
-                    Row(
-                      children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            size: 14, color: Color(0xFFD93025)),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Chỉ còn ${hotel.availableRooms} phòng với giá này trên AVORA!',
-                          style: const TextStyle(
-                            fontSize: 11,
+                      hotel.availableRooms! <= 5)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
                             color: Color(0xFFD93025),
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Còn ${hotel.availableRooms} phòng với mức giá này',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFFD93025),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                  ],
 
                   const Divider(height: 16, color: Color(0xFFE2E8F0)),
 
@@ -385,14 +413,15 @@ class HotelSearchCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '$nights đêm, $guests khách',
+                              '$nights đêm, $guests người lớn',
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 color: Color(0xFF64748B),
                               ),
                             ),
+                            const SizedBox(height: 2),
                             const Text(
-                              '✓ Bao gồm bữa sáng',
+                              'Bao gồm bữa sáng',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF16A34A),
@@ -413,8 +442,10 @@ class HotelSearchCard extends StatelessWidget {
                               '${_currencyFormatter.format(hotel.originalPrice)} VND',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF94A3B8),
+                                color: Color(0xFFDC2626),
                                 decoration: TextDecoration.lineThrough,
+                                decorationColor: Color(0xFFDC2626),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           Text(
@@ -422,11 +453,11 @@ class HotelSearchCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF003580),
+                              color: Color(0xFF0F172A),
                             ),
                           ),
                           const Text(
-                            'Đã bao gồm thuế và phí',
+                            'Đã bao gồm thuế & phí',
                             style: TextStyle(
                               fontSize: 10,
                               color: Color(0xFF64748B),
@@ -441,14 +472,14 @@ class HotelSearchCard extends StatelessWidget {
                   // CTA Button
                   SizedBox(
                     width: double.infinity,
-                    height: 40,
+                    height: 38,
                     child: ElevatedButton(
                       onPressed: onTap,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF003580),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         elevation: 0,
@@ -459,12 +490,12 @@ class HotelSearchCard extends StatelessWidget {
                           Text(
                             'Xem phòng trống',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Icon(Icons.chevron_right, size: 18),
+                          SizedBox(width: 4),
+                          Icon(Icons.chevron_right, size: 16),
                         ],
                       ),
                     ),
