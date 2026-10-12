@@ -63,11 +63,6 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.auto_awesome, color: Color(0xFFFBBF24)),
-          tooltip: 'Trợ lý AI',
-          onPressed: () => context.push('/ai-chat'),
-        ),
         Consumer(
           builder: (context, ref, _) {
             final count =
