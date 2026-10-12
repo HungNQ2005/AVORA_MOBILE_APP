@@ -4,12 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/ai_chat/presentation/screens/ai_chat_screen.dart';
+import '../../features/favorites/presentation/screens/favorites_screen.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────
 class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
-  static const String home = '/home'; // Placeholder cho màn hình chính
+  static const String home = '/home';
+  static const String aiChat = '/ai-chat';
+  static const String favorites = '/favorites';
 }
 
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
@@ -77,27 +82,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (context, state) => const _HomePlaceholder(),
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.aiChat,
+        name: 'aiChat',
+        builder: (context, state) => const AiChatScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.favorites,
+        name: 'favorites',
+        builder: (context, state) => const FavoritesScreen(),
       ),
     ],
   );
 });
 
-// ─── Placeholder Home Screen ──────────────────────────────────────────────────
-/// Màn hình Home tạm thời, sẽ được thay thế bởi feature tiếp theo.
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Avora')),
-      body: const Center(
-        child: Text(
-          '🎉 Đăng nhập thành công!',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-}

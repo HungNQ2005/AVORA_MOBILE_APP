@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
 
 /// Base URL của Avora Backend (port 5000).
-/// Dùng 10.0.2.2 khi chạy trên Android Emulator (ánh xạ sang localhost máy host).
-const String _baseUrl = 'http://10.0.2.2:5000/api';
+/// Tự động nhận diện: chạy Web/Desktop dùng localhost, chạy Android Emulator dùng 10.0.2.2.
+String get _baseUrl =>
+    kIsWeb ? 'http://localhost:5000/api' : 'http://10.0.2.2:5000/api';
 
 /// Provider cung cấp Dio instance đã được cấu hình sẵn.
 final apiClientProvider = Provider<Dio>((ref) {
