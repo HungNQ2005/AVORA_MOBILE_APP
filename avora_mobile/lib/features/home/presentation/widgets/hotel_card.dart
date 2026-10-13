@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../data/models/hotel_model.dart';
 import '../providers/home_provider.dart';
 import 'home_helpers.dart';
@@ -17,9 +19,12 @@ class HotelCard extends ConsumerWidget {
         (hotel.images.isNotEmpty ? hotel.images.first : null) ??
         'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
 
-    return Container(
-      width: 230,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => context.push(AppRoutes.hotelDetailPath(hotel.hotelId)),
+      child: Container(
+        width: 230,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -197,6 +202,7 @@ class HotelCard extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

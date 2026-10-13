@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:avora_mobile/core/router/app_router.dart';
 import 'package:avora_mobile/features/home/data/models/hotel_model.dart';
 import 'package:avora_mobile/features/home/presentation/providers/home_provider.dart';
 import 'package:avora_mobile/features/home/presentation/widgets/home_helpers.dart';
@@ -456,10 +457,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         minimumSize: Size.zero,
                       ),
                       onPressed: () {
-                        showHomeSnackBar(
-                          context,
-                          'Đang mở trang chi tiết đặt phòng cho ${hotel.name}',
-                        );
+                        context.push(AppRoutes.hotelDetailPath(hotel.hotelId));
                       },
                       child: const Text(
                         'Đặt phòng ngay',

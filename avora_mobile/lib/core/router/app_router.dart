@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/favorites/presentation/screens/favorites_screen.dart';
+import '../../features/hotels/presentation/screens/hotel_detail_screen.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────
 class AppRoutes {
@@ -13,6 +14,9 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String home = '/home';
   static const String favorites = '/favorites';
+  static const String hotelDetail = '/hotel/:id';
+
+  static String hotelDetailPath(String id) => '/hotel/$id';
 }
 
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
@@ -86,6 +90,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.favorites,
         name: 'favorites',
         builder: (context, state) => const FavoritesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.hotelDetail,
+        name: 'hotel_detail',
+        builder: (context, state) {
+          final hotelId = state.pathParameters['id'] ?? '1';
+          return HotelDetailScreen(hotelId: hotelId);
+        },
       ),
     ],
   );
