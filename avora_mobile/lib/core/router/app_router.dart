@@ -6,6 +6,8 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/favorites/presentation/screens/favorites_screen.dart';
+import '../../features/my_booking/presentation/screens/my_booking_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 
 import 'package:avora_mobile/features/hotels/presentation/screens/hotel_search_screen.dart';
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
@@ -16,6 +18,8 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String home = '/home';
   static const String favorites = '/favorites';
+  static const String myBooking = '/my-bookings';
+  static const String profile = '/profile';
   static const String hotelSearch = '/hotels';
 }
 
@@ -92,6 +96,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const FavoritesScreen(),
       ),
       GoRoute(
+        path: AppRoutes.myBooking,
+        name: 'myBooking',
+        builder: (context, state) => const MyBookingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.hotelSearch,
         name: 'hotelSearch',
         builder: (context, state) {
@@ -106,4 +120,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-

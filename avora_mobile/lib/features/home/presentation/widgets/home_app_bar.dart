@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
+
 import '../providers/home_provider.dart';
 import 'home_helpers.dart';
 
@@ -52,12 +53,34 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          Text(
-            'Xin chào, $userName',
-            style: const TextStyle(
-              color: Color(0xFFE2E8F0),
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
+          InkWell(
+            key: const Key('open_profile_button'),
+            onTap: () => context.push('/profile'),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Xin chào, $userName',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFE2E8F0),
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.account_circle_outlined,
+                    color: Color(0xFFE2E8F0),
+                    size: 15,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -65,8 +88,9 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         Consumer(
           builder: (context, ref, _) {
-            final count =
-                ref.watch(homeProvider.select((s) => s.favorites.length));
+            final count = ref.watch(
+              homeProvider.select((s) => s.favorites.length),
+            );
             return IconButton(
               icon: Badge(
                 isLabelVisible: count > 0,
@@ -78,6 +102,12 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
               onPressed: () => context.push('/favorites'),
             );
           },
+        ),
+        IconButton(
+          key: const Key('my_booking_button'),
+          icon: const Icon(Icons.luggage_outlined, color: Colors.white),
+          tooltip: 'Đặt chỗ của tôi',
+          onPressed: () => context.push('/my-bookings'),
         ),
         IconButton(
           icon: const Icon(Icons.notifications_none, color: Colors.white),
@@ -113,7 +143,10 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Navigator.pop(ctx);
               ref.read(authNotifierProvider.notifier).signOut();
             },
-            child: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Đăng xuất',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
