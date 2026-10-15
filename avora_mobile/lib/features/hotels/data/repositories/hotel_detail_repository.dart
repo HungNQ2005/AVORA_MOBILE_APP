@@ -50,11 +50,13 @@ class HotelDetailRepository {
       throw ApiException(message: 'Dữ liệu khách sạn không hợp lệ.');
     } on DioException catch (e) {
       if (e.error is ApiException) throw e.error as ApiException;
-      throw ApiException(
-        message: e.response?.data is Map && e.response?.data['message'] != null
-            ? e.response?.data['message'].toString()
-            : (e.message ?? 'Lỗi khi tải thông tin chi tiết khách sạn.'),
-      );
+      String errorMessage = 'Lỗi khi tải thông tin chi tiết khách sạn.';
+      if (e.response?.data is Map && e.response?.data['message'] != null) {
+        errorMessage = e.response!.data['message'].toString();
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        errorMessage = e.message!;
+      }
+      throw ApiException(message: errorMessage);
     } on ApiException {
       rethrow;
     } catch (e) {

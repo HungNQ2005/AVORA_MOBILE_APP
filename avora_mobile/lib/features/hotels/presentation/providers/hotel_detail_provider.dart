@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../home/presentation/providers/home_provider.dart';
+import 'package:avora_mobile/features/home/presentation/providers/home_provider.dart';
 import '../../data/models/hotel_detail_model.dart';
 import '../../data/repositories/hotel_detail_repository.dart';
 
