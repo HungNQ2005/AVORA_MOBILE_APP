@@ -105,6 +105,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthInitial();
   }
 
+  void setUser(UserModel user) {
+    if (state is AuthSuccess) {
+      state = AuthSuccess(user);
+    }
+  }
+
   /// Reset về Initial (dùng sau khi đã xử lý Error hoặc SignUpSuccess).
   void reset() => state = const AuthInitial();
 }
