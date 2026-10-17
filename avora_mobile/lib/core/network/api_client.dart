@@ -1,11 +1,21 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+
 import '../storage/secure_storage.dart';
 
 /// Base URL của Avora Backend (port 5000).
-/// Dùng 10.0.2.2 khi chạy trên Android Emulator (ánh xạ sang localhost máy host).
-const String _baseUrl = 'http://10.0.2.2:5000/api';
+/// Web/Desktop dùng localhost; Android Emulator dùng địa chỉ host 10.0.2.2.
+String get _baseUrl {
+  if (kIsWeb) return 'http://localhost:5000/api';
+
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android => 'http://10.0.2.2:5000/api',
+    _ => 'http://localhost:5000/api',
+  };
+}
 
 /// Provider cung cấp Dio instance đã được cấu hình sẵn.
 final apiClientProvider = Provider<Dio>((ref) {
@@ -127,8 +137,7 @@ class _ErrorInterceptor extends Interceptor {
     }
 
     return switch (type) {
-      DioExceptionType.connectionTimeout ||
-      DioExceptionType.receiveTimeout =>
+      DioExceptionType.connectionTimeout || DioExceptionType.receiveTimeout =>
         'Kết nối quá thời gian. Vui lòng kiểm tra kết nối mạng và thử lại.',
       DioExceptionType.connectionError =>
         'Không thể kết nối đến máy chủ. Kiểm tra mạng hoặc máy chủ.',
@@ -144,11 +153,7 @@ class ApiException implements Exception {
   final int? statusCode;
   final String? code;
 
-  const ApiException({
-    required this.message,
-    this.statusCode,
-    this.code,
-  });
+  const ApiException({required this.message, this.statusCode, this.code});
 
   @override
   String toString() => 'ApiException($statusCode, code: $code): $message';

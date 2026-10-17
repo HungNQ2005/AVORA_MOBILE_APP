@@ -4,12 +4,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/favorites/presentation/screens/favorites_screen.dart';
+import '../../features/hotels/presentation/screens/hotel_detail_screen.dart';
+import '../../features/hotels/presentation/screens/hotel_search_screen.dart';
+import '../../features/my_booking/presentation/screens/my_booking_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+
+
+import 'package:avora_mobile/features/hotels/presentation/screens/hotel_search_screen.dart';
+import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────
 class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
-  static const String home = '/home'; // Placeholder cho màn hình chính
+  static const String home = '/home';
+  static const String favorites = '/favorites';
+  static const String hotelDetail = '/hotel/:id';
+  static String hotelDetailPath(String id) => '/hotel/$id';
+  static const String myBooking = '/my-bookings';
+  static const String profile = '/profile';
+  static const String hotelSearch = '/hotels';
 }
 
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
@@ -77,27 +93,43 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (context, state) => const _HomePlaceholder(),
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.favorites,
+        name: 'favorites',
+        builder: (context, state) => const FavoritesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.hotelDetail,
+        name: 'hotel_detail',
+        builder: (context, state) {
+          final hotelId = state.pathParameters['id'] ?? '1';
+          return HotelDetailScreen(hotelId: hotelId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.myBooking,
+        name: 'myBooking',
+        builder: (context, state) => const MyBookingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.hotelSearch,
+        name: 'hotelSearch',
+        builder: (context, state) {
+          final initialParams = state.extra as HotelSearchParams?;
+          final destination = state.uri.queryParameters['destination'];
+          return HotelSearchScreen(
+            initialParams: initialParams,
+            initialDestination: destination,
+          );
+        },
       ),
     ],
   );
 });
-
-// ─── Placeholder Home Screen ──────────────────────────────────────────────────
-/// Màn hình Home tạm thời, sẽ được thay thế bởi feature tiếp theo.
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Avora')),
-      body: const Center(
-        child: Text(
-          '🎉 Đăng nhập thành công!',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-}

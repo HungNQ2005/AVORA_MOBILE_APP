@@ -148,16 +148,15 @@ class _ForgotPasswordModalState extends ConsumerState<ForgotPasswordModal> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0F2FE),
+              color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
               Icons.lock_reset_rounded,
-              color: Color(0xFF0284C7),
+              color: Color(0xFF003580),
               size: 32,
             ),
           ),
-          const SizedBox(height: 16),
 
           // Title
           const Text(
@@ -230,10 +229,10 @@ class _ForgotPasswordModalState extends ConsumerState<ForgotPasswordModal> {
             child: ElevatedButton(
               onPressed: _isLoading ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
+                backgroundColor: const Color(0xFF003580),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: _isLoading
@@ -297,7 +296,7 @@ class _ForgotPasswordModalState extends ConsumerState<ForgotPasswordModal> {
                 text: _sentEmail,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0284C7),
+                  color: Color(0xFF003580),
                 ),
               ),
               const TextSpan(text: '.'),
@@ -341,10 +340,10 @@ class _ForgotPasswordModalState extends ConsumerState<ForgotPasswordModal> {
           child: ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0284C7),
+              backgroundColor: const Color(0xFF003580),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             child: const Text(
