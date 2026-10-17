@@ -154,7 +154,7 @@ class HotelDetailBookingModal extends StatelessWidget {
               // Nút hoàn tất & đóng
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006CE4),
+                  backgroundColor: const Color(0xFF0066FF),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(

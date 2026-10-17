@@ -24,14 +24,45 @@ void showGuestRoomPicker(BuildContext context, WidgetRef ref, HomeState state) {
               children: [
                 const Text(
                   'Số lượng khách và phòng',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tối đa 5 người/phòng (bao gồm cả giường phụ).',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 16,
+                        color: Color(0xFF003580),
+                      ),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '2 giường tiêu chuẩn = 4 người • Có thêm 1 giường phụ = tối đa 5 người/phòng',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF1E3A8A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 // Adults
                 _CounterRow(
@@ -80,9 +111,9 @@ void showGuestRoomPicker(BuildContext context, WidgetRef ref, HomeState state) {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF003580),
+                      backgroundColor: const Color(0xFF0066FF),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: () {
@@ -147,21 +178,26 @@ class _CounterRow extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.remove_circle_outline),
-              color: value > minValue ? const Color(0xFF0284C7) : Colors.grey,
+              color: value > minValue
+                  ? const Color(0xFF0066FF)
+                  : const Color(0xFFCBD5E1),
               onPressed: value > minValue ? () => onChanged(value - 1) : null,
             ),
             SizedBox(
-              width: 24,
+              width: 28,
               child: Text(
                 '$value',
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: Color(0xFF111827),
+                ),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              color: const Color(0xFF0284C7),
+              color: const Color(0xFF0066FF),
               onPressed: () => onChanged(value + 1),
             ),
           ],

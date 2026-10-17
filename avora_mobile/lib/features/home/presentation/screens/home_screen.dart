@@ -25,9 +25,10 @@ class HomeScreen extends ConsumerWidget {
     final userName = user?.fullName ?? user?.email ?? 'Quý khách';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF4F6FA),
       appBar: HomeAppBar(userName: userName),
       body: RefreshIndicator(
+        color: const Color(0xFF003580),
         onRefresh: () => ref.read(homeProvider.notifier).refresh(),
         child: const SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
@@ -46,7 +47,6 @@ class HomeScreen extends ConsumerWidget {
               InteractiveMapBanner(),
               SizedBox(height: 24),
               ValueGuarantees(),
-              SizedBox(height: 36),
             ],
           ),
         ),

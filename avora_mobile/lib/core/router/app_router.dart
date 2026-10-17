@@ -8,6 +8,9 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/favorites/presentation/screens/favorites_screen.dart';
 import '../../features/hotels/presentation/screens/hotel_detail_screen.dart';
 
+import 'package:avora_mobile/features/hotels/presentation/screens/hotel_search_screen.dart';
+import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
+
 // ─── Route Paths ──────────────────────────────────────────────────────────────
 class AppRoutes {
   static const String login = '/login';
@@ -15,8 +18,8 @@ class AppRoutes {
   static const String home = '/home';
   static const String favorites = '/favorites';
   static const String hotelDetail = '/hotel/:id';
-
   static String hotelDetailPath(String id) => '/hotel/$id';
+  static const String hotelSearch = '/hotels';
 }
 
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
@@ -99,7 +102,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           return HotelDetailScreen(hotelId: hotelId);
         },
       ),
+      GoRoute(
+        path: AppRoutes.hotelSearch,
+        name: 'hotelSearch',
+        builder: (context, state) {
+          final initialParams = state.extra as HotelSearchParams?;
+          final destination = state.uri.queryParameters['destination'];
+          return HotelSearchScreen(
+            initialParams: initialParams,
+            initialDestination: destination,
+          );
+        },
+      ),
     ],
   );
 });
-

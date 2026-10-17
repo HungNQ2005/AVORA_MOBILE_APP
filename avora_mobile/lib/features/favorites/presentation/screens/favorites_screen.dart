@@ -43,7 +43,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFF003580),
         foregroundColor: Colors.white,
@@ -102,7 +102,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         hintStyle: const TextStyle(fontSize: 13),
                         prefixIcon: const Icon(
                           Icons.search,
-                          color: Color(0xFF0284C7),
+                          color: Color(0xFF003580),
                           size: 20,
                         ),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -181,7 +181,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -259,7 +259,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -277,7 +277,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 height: 160,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   height: 160,
                   color: const Color(0xFFCBD5E1),
                   child: const Icon(Icons.image_not_supported, size: 36),
@@ -300,11 +300,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 6,
                         ),
                       ],
@@ -327,7 +327,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.65),
+                    color: Colors.black.withValues(alpha: 0.65),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -445,7 +445,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF003580),
+                        backgroundColor: const Color(0xFF0066FF),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),

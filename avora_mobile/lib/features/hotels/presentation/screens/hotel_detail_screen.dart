@@ -4,13 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:avora_mobile/core/router/app_router.dart';
+import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:avora_mobile/features/home/presentation/providers/home_provider.dart';
 
 import '../../data/models/hotel_detail_model.dart';
 import '../../data/models/room_capacity_helper.dart';
 import '../providers/hotel_detail_provider.dart';
+import '../widgets/hotel_detail_booking_modal.dart';
 import '../widgets/hotel_detail_lightbox.dart';
-
+import '../widgets/hotel_detail_map_modal.dart';
 class HotelDetailScreen extends ConsumerStatefulWidget {
   final String hotelId;
 
@@ -21,11 +23,11 @@ class HotelDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
-  static const _blue = Color(0xFF155EEF);
-  static const _ink = Color(0xFF172033);
-  static const _muted = Color(0xFF667085);
-  static const _page = Color(0xFFF5F7FA);
-
+  static const _navy = Color(0xFF003580);
+  static const _blue = Color(0xFF0066FF);
+  static const _ink = Color(0xFF111827);
+  static const _muted = Color(0xFF4B5563);
+  static const _page = Color(0xFFF4F6FA);
   final _roomsKey = GlobalKey();
   final _currency = NumberFormat('#,###', 'vi_VN');
   late final PageController _galleryController;
@@ -87,6 +89,40 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
     );
   }
 
+  void _openMapModal(HotelDetailModel hotel) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => HotelDetailMapModal(
+        hotel: hotel,
+        onClose: () => Navigator.of(ctx).pop(),
+      ),
+    );
+  }
+
+  void _openBookingModal(
+    HotelDetailModel hotel,
+    RoomTypeDetailModel room,
+    HotelDetailState state,
+  ) {
+    final authState = ref.read(authNotifierProvider);
+    final user = authState is AuthSuccess ? authState.user : null;
+    final guestName = user?.fullName ?? user?.email ?? 'Khách hàng Avora';
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => HotelDetailBookingModal(
+        hotel: hotel,
+        room: room,
+        guestName: guestName,
+        formattedStayDates: state.formattedStayDates,
+        nights: state.nights,
+        adults: state.adults,
+        children: state.children,
+        rooms: state.rooms,
+        onComplete: () => Navigator.of(ctx).pop(),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(hotelDetailProvider(widget.hotelId));
@@ -140,18 +176,21 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
     return Scaffold(
       backgroundColor: _page,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: _ink,
-        surfaceTintColor: Colors.white,
+        backgroundColor: _navy,
+        foregroundColor: Colors.white,
         title: Text(
           hotel.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
         leading: IconButton(
           onPressed: _back,
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           tooltip: 'Quay lại',
         ),
         actions: [
@@ -160,13 +199,13 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
             onPressed: notifier.toggleFavorite,
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? const Color(0xFFE5484D) : _ink,
+              color: isFavorite ? const Color(0xFFFF4D4F) : Colors.white,
             ),
           ),
           IconButton(
             tooltip: 'Chia sẻ',
             onPressed: () => _shareHotel(hotel),
-            icon: const Icon(Icons.ios_share_outlined),
+            icon: const Icon(Icons.ios_share_outlined, color: Colors.white),
           ),
         ],
       ),
@@ -303,38 +342,121 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (stars > 0)
-            Row(
-              children: List.generate(
-                stars,
-                (_) =>
-                    const Icon(Icons.star, color: Color(0xFFF5A623), size: 18),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (stars > 0)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    stars,
+                    (_) => const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFFC107),
+                      size: 17,
+                    ),
+                  ),
+                ),
+              if (stars > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Text(
+                    'Khách sạn $stars sao',
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_rounded,
+                      size: 12,
+                      color: _navy,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Avora Preferred+',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: _navy,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          const SizedBox(height: 6),
+            ],
+          ),
+          const SizedBox(height: 8),
           Text(
             hotel.name,
             style: const TextStyle(
               color: _ink,
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              height: 1.2,
+              height: 1.25,
             ),
           ),
           const SizedBox(height: 10),
           if (address.isNotEmpty)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.location_on_outlined, color: _blue, size: 19),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    address,
-                    style: const TextStyle(color: _muted, height: 1.4),
+            InkWell(
+              onTap: () => _openMapModal(hotel),
+              borderRadius: BorderRadius.circular(6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on, color: _blue, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: address,
+                            style: const TextStyle(
+                              color: _muted,
+                              height: 1.4,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: ' · Hiển thị trên bản đồ',
+                            style: TextStyle(
+                              color: _blue,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           const SizedBox(height: 14),
           Row(
@@ -345,8 +467,8 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: _blue,
-                  borderRadius: BorderRadius.circular(9),
+                  color: _navy,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   hotel.starRating.toStringAsFixed(1),
@@ -364,11 +486,11 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                     hotel.scoreLabel,
                     style: const TextStyle(
                       color: _ink,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   Text(
-                    '${hotel.reviewsCount} đánh giá',
+                    '${hotel.reviewsCount} đánh giá xác thực',
                     style: const TextStyle(color: _muted, fontSize: 12),
                   ),
                 ],
@@ -473,7 +595,12 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
               children: [
                 for (var index = 0; index < hotel.rooms.length; index++) ...[
                   if (index > 0) const SizedBox(height: 12),
-                  _RoomCard(room: hotel.rooms[index], currency: _currency),
+                  _RoomCard(
+                    room: hotel.rooms[index],
+                    currency: _currency,
+                    onBook: () =>
+                        _openBookingModal(hotel, hotel.rooms[index], state),
+                  ),
                 ],
               ],
             ),
@@ -597,8 +724,13 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
 class _RoomCard extends StatelessWidget {
   final RoomTypeDetailModel room;
   final NumberFormat currency;
+  final VoidCallback onBook;
 
-  const _RoomCard({required this.room, required this.currency});
+  const _RoomCard({
+    required this.room,
+    required this.currency,
+    required this.onBook,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -688,35 +820,59 @@ class _RoomCard extends StatelessWidget {
           ],
           const Divider(height: 22),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (room.originalPrice != null &&
-                      room.originalPrice! > room.price)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (room.originalPrice != null &&
+                        room.originalPrice! > room.price)
+                      Text(
+                        '${currency.format(room.originalPrice)} đ',
+                        style: const TextStyle(
+                          color: Color(0xFFDC2626),
+                          fontSize: 12,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
                     Text(
-                      '${currency.format(room.originalPrice)} đ',
+                      '${currency.format(room.price)} VND',
                       style: const TextStyle(
-                        color: Color(0xFF98A2B3),
-                        fontSize: 12,
-                        decoration: TextDecoration.lineThrough,
+                        color: Color(0xFF111827),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                  Text(
-                    '${currency.format(room.price)} đ',
-                    style: const TextStyle(
-                      color: Color(0xFF155EEF),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                    const Text(
+                      'mỗi đêm · đã gồm thuế & phí',
+                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 11),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: room.availableRooms > 0 ? onBook : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0066FF),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(120, 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  const Text(
-                    'mỗi đêm',
-                    style: TextStyle(color: Color(0xFF667085), fontSize: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                ),
+                child: Text(
+                  room.availableRooms > 0 ? 'Chọn phòng này' : 'Hết phòng',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),

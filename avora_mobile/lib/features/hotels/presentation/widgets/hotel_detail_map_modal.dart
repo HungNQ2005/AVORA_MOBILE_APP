@@ -68,7 +68,7 @@ class HotelDetailMapModal extends StatelessWidget {
                 height: 240,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   height: 240,
                   color: const Color(0xFFE2E8F0),
                   child: const Center(
@@ -90,7 +90,7 @@ class HotelDetailMapModal extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -118,7 +118,7 @@ class HotelDetailMapModal extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7),
+                                color: const Color(0xFF0066FF),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -178,7 +178,7 @@ class HotelDetailMapModal extends StatelessWidget {
                 const SizedBox(height: 14),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF006CE4),
+                    backgroundColor: const Color(0xFF0066FF),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 44),
                     shape: RoundedRectangleBorder(

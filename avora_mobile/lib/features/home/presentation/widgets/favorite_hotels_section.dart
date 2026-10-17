@@ -22,9 +22,9 @@ class FavoriteHotelsSection extends ConsumerWidget {
               Text(
                 'ĐƯỢC ĐẶT NHIỀU NHẤT 24 GIỜ QUA',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0284C7),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0066FF),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -32,9 +32,9 @@ class FavoriteHotelsSection extends ConsumerWidget {
               Text(
                 'Chỗ nghỉ được khách yêu thích nhất',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
                 ),
               ),
             ],
@@ -45,7 +45,7 @@ class FavoriteHotelsSection extends ConsumerWidget {
           const Center(
             child: Padding(
               padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Color(0xFF003580)),
             ),
           )
         else if (state.hotels.isEmpty)
@@ -54,13 +54,13 @@ class FavoriteHotelsSection extends ConsumerWidget {
             child: Center(
               child: Text(
                 'Không tìm thấy khách sạn nào.',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: Color(0xFF6B7280)),
               ),
             ),
           )
         else
           SizedBox(
-            height: 310,
+            height: 360,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),

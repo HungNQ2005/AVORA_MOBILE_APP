@@ -68,7 +68,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
           ];
 
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.95),
+      backgroundColor: Colors.black.withValues(alpha: 0.95),
       body: SafeArea(
         child: Stack(
           children: [
@@ -95,7 +95,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
                           ),
                         );
                       },
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, _, _) => const Center(
                         child: Icon(
                           Icons.image_not_supported,
                           color: Colors.white54,
@@ -119,7 +119,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
                     icon: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.close, color: Colors.white, size: 22),
@@ -143,7 +143,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white24),
                     ),
@@ -174,7 +174,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white24),
                       ),
@@ -199,7 +199,7 @@ class _HotelDetailLightboxState extends State<HotelDetailLightbox> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white24),
                       ),

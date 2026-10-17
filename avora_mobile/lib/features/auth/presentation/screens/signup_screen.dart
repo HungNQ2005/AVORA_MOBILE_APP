@@ -112,7 +112,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const TextSpan(text: 'Tài khoản cho email '),
                       TextSpan(
                         text: next.email,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF003580)),
                       ),
                       const TextSpan(text: ' đã được tạo thành công.'),
                     ],
@@ -151,7 +151,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   context.go(AppRoutes.login);
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
+                  backgroundColor: const Color(0xFF003580),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                 ),
@@ -183,129 +183,210 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final isLoading = authState is AuthLoading;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header ──────────────────────────────────────────────────
-                const SizedBox(height: 16),
-                _buildHeader(),
-                const SizedBox(height: 32),
-
-                // ── Full Name ─────────────────────────────────────────────
-                TextFormField(
-                  key: const Key('signup_name_field'),
-                  controller: _nameController,
-                  keyboardType: TextInputType.name,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Họ và tên',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  validator: _validateName,
-                ),
-                const SizedBox(height: 16),
-
-                // ── Email ─────────────────────────────────────────────────
-                TextFormField(
-                  key: const Key('signup_email_field'),
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: 16),
-
-                // ── Password ──────────────────────────────────────────────
-                TextFormField(
-                  key: const Key('signup_password_field'),
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Mật khẩu (tối thiểu 8 ký tự)',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Column(
+                children: [
+                  _buildBrandPill(),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0F000000),
+                          blurRadius: 24,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ),
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 24),
 
-                // ── Confirm Password ──────────────────────────────────────
-                TextFormField(
-                  key: const Key('signup_confirm_password_field'),
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirm,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    labelText: 'Xác nhận mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirm
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
-                  ),
-                  validator: _validateConfirmPassword,
-                ),
-                const SizedBox(height: 32),
-
-                // ── Signup Button ─────────────────────────────────────────
-                ElevatedButton(
-                  key: const Key('signup_submit_button'),
-                  onPressed: isLoading ? null : _submit,
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
+                          // ── Full Name ───────────────────────────────────────
+                          TextFormField(
+                            key: const Key('signup_name_field'),
+                            controller: _nameController,
+                            keyboardType: TextInputType.name,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: const InputDecoration(
+                              labelText: 'Họ và tên',
+                              prefixIcon: Icon(Icons.person_outline),
+                            ),
+                            validator: _validateName,
                           ),
-                        )
-                      : const Text('Tạo tài khoản'),
-                ),
-                const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                // ── Navigate to Login ──────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Đã có tài khoản?'),
-                    TextButton(
-                      key: const Key('signup_to_login_button'),
-                      onPressed: () => context.go(AppRoutes.login),
-                      child: const Text('Đăng nhập'),
+                          // ── Email ───────────────────────────────────────────
+                          TextFormField(
+                            key: const Key('signup_email_field'),
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                            validator: _validateEmail,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Password ────────────────────────────────────────
+                          TextFormField(
+                            key: const Key('signup_password_field'),
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
+                              labelText: 'Mật khẩu (tối thiểu 8 ký tự)',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                            ),
+                            validator: _validatePassword,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Confirm Password ────────────────────────────────
+                          TextFormField(
+                            key: const Key('signup_confirm_password_field'),
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirm,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _submit(),
+                            decoration: InputDecoration(
+                              labelText: 'Xác nhận mật khẩu',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirm
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscureConfirm = !_obscureConfirm,
+                                ),
+                              ),
+                            ),
+                            validator: _validateConfirmPassword,
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ── Signup Button ───────────────────────────────────
+                          ElevatedButton(
+                            key: const Key('signup_submit_button'),
+                            onPressed: isLoading ? null : _submit,
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text('Tạo tài khoản'),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Navigate to Login ───────────────────────────────
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text('Đã có tài khoản?'),
+                              TextButton(
+                                key: const Key('signup_to_login_button'),
+                                onPressed: () => context.go(AppRoutes.login),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF003580),
+                                ),
+                                child: const Text('Đăng nhập'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBrandPill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF003580),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33003580),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'AVORA',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFC107),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'VIỆT NAM',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                height: 1,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -314,33 +395,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
-          ).createShader(bounds),
-          child: const Text(
-            'AVORA',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
+        const Text(
+          'Tạo tài khoản mới',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+            height: 1.25,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Tạo tài khoản mới',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF0F172A),
-              ),
-        ),
         const SizedBox(height: 4),
-        Text(
+        const Text(
           'Đăng ký để khám phá Avora.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF64748B),
-              ),
+          style: TextStyle(
+            fontSize: 13.5,
+            color: Color(0xFF4B5563),
+          ),
         ),
       ],
     );

@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             barrierDismissible: false,
             builder: (ctx) => AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              icon: const Icon(Icons.mark_email_unread_outlined, color: Color(0xFF0284C7), size: 44),
+              icon: const Icon(Icons.mark_email_unread_outlined, color: Color(0xFF003580), size: 44),
               title: const Text(
                 'Xác thực tài khoản',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
@@ -130,7 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ref.read(authNotifierProvider.notifier).reset();
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0284C7),
+                    backgroundColor: const Color(0xFF003580),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                   ),
@@ -157,122 +157,205 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Lắng nghe state thay đổi để xử lý side effects
     ref.listen<AuthState>(authNotifierProvider, _handleStateChange);
 
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState is AuthLoading;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header ──────────────────────────────────────────────────
-                const SizedBox(height: 32),
-                _buildHeader(),
-                const SizedBox(height: 40),
-
-                // ── Email Field ──────────────────────────────────────────────
-                TextFormField(
-                  key: const Key('login_email_field'),
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: 16),
-
-                // ── Password Field ───────────────────────────────────────────
-                TextFormField(
-                  key: const Key('login_password_field'),
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    labelText: 'Mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildBrandPill(),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0F000000),
+                          blurRadius: 24,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ),
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 8),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 24),
 
-                // ── Forgot Password Link ─────────────────────────────────────
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    key: const Key('login_forgot_password_button'),
-                    onPressed: () => ForgotPasswordModal.show(
-                      context,
-                      initialEmail: _emailController.text.trim(),
-                    ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    ),
-                    child: const Text(
-                      'Quên mật khẩu?',
-                      style: TextStyle(
-                        color: Color(0xFF0284C7),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Login Button ─────────────────────────────────────────────
-                ElevatedButton(
-                  key: const Key('login_submit_button'),
-                  onPressed: isLoading ? null : _submit,
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
+                          // ── Email Field ──────────────────────────────────────
+                          TextFormField(
+                            key: const Key('login_email_field'),
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                            validator: _validateEmail,
                           ),
-                        )
-                      : const Text('Đăng nhập'),
-                ),
-                const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                // ── Navigate to Signup ───────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Chưa có tài khoản?'),
-                    TextButton(
-                      key: const Key('login_to_signup_button'),
-                      onPressed: () => context.go(AppRoutes.signup),
-                      child: const Text('Đăng ký ngay'),
+                          // ── Password Field ───────────────────────────────────
+                          TextFormField(
+                            key: const Key('login_password_field'),
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _submit(),
+                            decoration: InputDecoration(
+                              labelText: 'Mật khẩu',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                            ),
+                            validator: _validatePassword,
+                          ),
+                          const SizedBox(height: 8),
+
+                          // ── Forgot Password Link ─────────────────────────────
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              key: const Key('login_forgot_password_button'),
+                              onPressed: () => ForgotPasswordModal.show(
+                                context,
+                                initialEmail: _emailController.text.trim(),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                              ),
+                              child: const Text(
+                                'Quên mật khẩu?',
+                                style: TextStyle(
+                                  color: Color(0xFF003580),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // ── Login Button ─────────────────────────────────────
+                          ElevatedButton(
+                            key: const Key('login_submit_button'),
+                            onPressed: isLoading ? null : _submit,
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text('Đăng nhập'),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Navigate to Signup ───────────────────────────────
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text('Chưa có tài khoản?'),
+                              TextButton(
+                                key: const Key('login_to_signup_button'),
+                                onPressed: () => context.go(AppRoutes.signup),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF003580),
+                                ),
+                                child: const Text('Đăng ký ngay'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBrandPill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF003580),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33003580),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'AVORA',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFC107),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'VIỆT NAM',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                height: 1,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -281,34 +364,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo text
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
-          ).createShader(bounds),
-          child: const Text(
-            'AVORA',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
+        const Text(
+          'Đăng nhập tài khoản',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+            height: 1.25,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Chào mừng trở lại!',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF0F172A),
+        const SizedBox(height: 6),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF4B5563),
+              height: 1.45,
+            ),
+            children: [
+              TextSpan(text: 'Đăng nhập để nhận ưu đãi thành viên '),
+              TextSpan(
+                text: 'Genius giảm đến 15%',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
               ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Đăng nhập để tiếp tục.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF64748B),
+              TextSpan(
+                text: ' tại hàng ngàn khách sạn, resort trên khắp Việt Nam.',
               ),
+            ],
+          ),
         ),
       ],
     );
