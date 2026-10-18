@@ -10,6 +10,7 @@ import '../widgets/profile_header.dart';
 import '../widgets/profile_info_section.dart';
 import '../widgets/profile_security_section.dart';
 import '../widgets/profile_widgets.dart';
+import '../widgets/deactivate_account_modal.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -338,6 +339,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _handleDeactivateAccount(UserModel profile) {
+    DeactivateAccountModal.show(
+      context,
+      userEmail: profile.email,
+      onDeactivatedSuccess: () async {
+        if (!mounted) return;
+        await ref.read(authNotifierProvider.notifier).signOut();
+      },
+    );
+  }
+
   Widget _buildSecurityTab(UserModel profile) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
@@ -363,6 +375,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             () => _obscureConfirmPassword = !_obscureConfirmPassword,
           ),
           onChangePassword: _changePassword,
+          onDeactivateAccount: () => _handleDeactivateAccount(profile),
         ),
       ],
     );

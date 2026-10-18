@@ -15,6 +15,7 @@ class ProfileSecuritySection extends StatelessWidget {
   final VoidCallback onToggleNewPassword;
   final VoidCallback onToggleConfirmPassword;
   final VoidCallback onChangePassword;
+  final VoidCallback onDeactivateAccount;
 
   const ProfileSecuritySection({
     super.key,
@@ -31,6 +32,7 @@ class ProfileSecuritySection extends StatelessWidget {
     required this.onToggleNewPassword,
     required this.onToggleConfirmPassword,
     required this.onChangePassword,
+    required this.onDeactivateAccount,
   });
 
   @override
@@ -146,6 +148,65 @@ class ProfileSecuritySection extends StatelessWidget {
                     color: Color(0xFF1E40AF),
                     fontSize: 12,
                     height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      color: Color(0xFFDC2626), size: 22),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Vô hiệu hóa tài khoản',
+                      style: TextStyle(
+                        color: Color(0xFFDC2626),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Hủy kích hoạt tài khoản sẽ tạm dừng quyền truy cập và đăng xuất khỏi toàn bộ hệ thống Avora.',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onDeactivateAccount,
+                  icon: const Icon(Icons.no_accounts_outlined,
+                      color: Color(0xFFDC2626)),
+                  label: const Text(
+                    'Hủy kích hoạt tài khoản',
+                    style: TextStyle(
+                      color: Color(0xFFDC2626),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    backgroundColor: const Color(0xFFFEF2F2),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
