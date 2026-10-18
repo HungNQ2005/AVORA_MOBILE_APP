@@ -12,7 +12,6 @@ import '../../features/my_booking/presentation/screens/my_booking_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 
 
-import 'package:avora_mobile/features/hotels/presentation/screens/hotel_search_screen.dart';
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
 // ─── Route Paths ──────────────────────────────────────────────────────────────

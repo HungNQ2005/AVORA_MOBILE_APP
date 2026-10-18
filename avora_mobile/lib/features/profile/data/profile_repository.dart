@@ -75,6 +75,53 @@ class ProfileRepository {
     }
   }
 
+  Future<void> requestDeactivateOtp() async {
+    try {
+      final response = await _dio.post('/account/deactivate/request-otp');
+      final body = _asMap(response.data);
+      if (body['status'] != 'success' && body['success'] != true) {
+        throw ApiException(
+          message: body['message']?.toString() ??
+              'Không thể gửi mã xác thực. Vui lòng thử lại.',
+        );
+      }
+    } on DioException catch (error) {
+      throw _toApiException(
+        error,
+        'Không thể gửi mã xác thực. Vui lòng thử lại.',
+      );
+    } on ApiException {
+      rethrow;
+    } catch (error) {
+      throw ApiException(message: 'Lỗi gửi mã xác thực: $error');
+    }
+  }
+
+  Future<void> deactivateAccount({required String otp}) async {
+    try {
+      final response = await _dio.post(
+        '/account/deactivate',
+        data: {'otp': otp},
+      );
+      final body = _asMap(response.data);
+      if (body['status'] != 'success' && body['success'] != true) {
+        throw ApiException(
+          message: body['message']?.toString() ??
+              'Không thể hủy kích hoạt tài khoản. Vui lòng thử lại.',
+        );
+      }
+    } on DioException catch (error) {
+      throw _toApiException(
+        error,
+        'Không thể hủy kích hoạt tài khoản. Vui lòng thử lại.',
+      );
+    } on ApiException {
+      rethrow;
+    } catch (error) {
+      throw ApiException(message: 'Lỗi hủy kích hoạt tài khoản: $error');
+    }
+  }
+
   UserModel _parseUser(dynamic responseData) {
     final body = _asMap(responseData);
     if (body['status'] != 'success' && body['success'] != true) {
