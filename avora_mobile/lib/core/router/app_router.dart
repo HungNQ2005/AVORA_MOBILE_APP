@@ -10,7 +10,8 @@ import '../../features/hotels/presentation/screens/hotel_detail_screen.dart';
 import '../../features/hotels/presentation/screens/hotel_search_screen.dart';
 import '../../features/my_booking/presentation/screens/my_booking_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
-
+import '../../features/booking/presentation/screens/booking_guest_info_screen.dart';
+import '../../features/booking/data/models/booking_guest_info_args.dart';
 
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String myBooking = '/my-bookings';
   static const String profile = '/profile';
   static const String hotelSearch = '/hotels';
+  static const String bookingGuestInfo = '/booking/guest-info';
 }
 
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
@@ -127,6 +129,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             initialParams: initialParams,
             initialDestination: destination,
           );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.bookingGuestInfo,
+        name: 'booking_guest_info',
+        builder: (context, state) {
+          final args = state.extra as BookingGuestInfoArgs?;
+          return BookingGuestInfoScreen(args: args);
         },
       ),
     ],
