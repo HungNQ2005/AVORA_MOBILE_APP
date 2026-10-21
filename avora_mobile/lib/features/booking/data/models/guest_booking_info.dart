@@ -9,6 +9,8 @@ class GuestBookingInfo extends Equatable {
   final String phone;
   final List<String> selectedRequests;
   final String customNote;
+  final String? couponCode;
+  final num? discountAmount;
 
   const GuestBookingInfo({
     this.lastName = '',
@@ -17,6 +19,8 @@ class GuestBookingInfo extends Equatable {
     this.phone = '',
     this.selectedRequests = const [],
     this.customNote = '',
+    this.couponCode,
+    this.discountAmount,
   });
 
   /// Họ và tên đầy đủ kết hợp từ Họ đệm và Tên
@@ -127,6 +131,8 @@ class GuestBookingInfo extends Equatable {
     String? phone,
     List<String>? selectedRequests,
     String? customNote,
+    String? couponCode,
+    num? discountAmount,
   }) {
     return GuestBookingInfo(
       lastName: lastName ?? this.lastName,
@@ -135,6 +141,8 @@ class GuestBookingInfo extends Equatable {
       phone: phone ?? this.phone,
       selectedRequests: selectedRequests ?? this.selectedRequests,
       customNote: customNote ?? this.customNote,
+      couponCode: couponCode ?? this.couponCode,
+      discountAmount: discountAmount ?? this.discountAmount,
     );
   }
 
@@ -146,6 +154,8 @@ class GuestBookingInfo extends Equatable {
         phone,
         selectedRequests,
         customNote,
+        couponCode,
+        discountAmount,
       ];
 }
 

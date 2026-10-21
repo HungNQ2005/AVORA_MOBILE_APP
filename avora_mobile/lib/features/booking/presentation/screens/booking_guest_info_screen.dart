@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/booking_guest_info_args.dart';
 import '../../data/models/guest_booking_info.dart';
+import '../providers/booking_coupon_provider.dart';
 import '../widgets/booking_contact_info_card.dart';
+import '../widgets/booking_coupon_card.dart';
 import '../widgets/booking_info_preview_dialog.dart';
 import '../widgets/booking_special_requests_card.dart';
 import '../widgets/booking_stay_summary_card.dart';
@@ -34,6 +37,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
   late final TextEditingController _firstNameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _noteController;
+  late final TextEditingController _couponController;
 
   String _selectedCountryCode = '+84';
   final Set<String> _selectedRequests = {};
@@ -54,10 +58,19 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
     _firstNameController = TextEditingController();
     _phoneController = TextEditingController();
     _noteController = TextEditingController();
+    _couponController = TextEditingController();
 
     // Tự động điền dữ liệu người dùng đăng nhập hiện tại nếu có
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _prefillUserData();
+      ref.read(bookingCouponProvider.notifier).init(
+        hotelId: _args.hotel?.hotelId ?? '',
+        roomTypeId: _args.room?.roomTypeId ?? '',
+        quantity: _args.rooms,
+        checkInDate: _args.checkInDate,
+        checkOutDate: _args.checkOutDate,
+        fallbackSubtotal: _args.totalPrice,
+      );
     });
   }
 
@@ -95,6 +108,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
     _firstNameController.dispose();
     _phoneController.dispose();
     _noteController.dispose();
+    _couponController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -178,6 +192,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
       return;
     }
 
+    final couponState = ref.read(bookingCouponProvider);
     final guestInfo = GuestBookingInfo(
       lastName: _lastNameController.text.trim(),
       firstName: _firstNameController.text.trim(),
@@ -185,6 +200,8 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
       phone: _phoneController.text.trim(),
       selectedRequests: _selectedRequests.toList(),
       customNote: _noteController.text.trim(),
+      couponCode: couponState.appliedCoupon?.code,
+      discountAmount: couponState.discountAmount,
     );
 
     // Mở BottomSheet xem trước thông tin chuẩn bị xác nhận
@@ -204,6 +221,8 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
   }
 
   void _showBookingSuccessFeedback(GuestBookingInfo guestInfo) {
+    final currency = NumberFormat('#,###', 'vi_VN');
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -235,6 +254,16 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            if (guestInfo.couponCode != null && guestInfo.couponCode!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '• Mã ưu đãi: ${guestInfo.couponCode} (-${currency.format(guestInfo.discountAmount ?? 0)} ₫)',
+                style: const TextStyle(
+                  color: Color(0xFF059669),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -260,6 +289,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
   @override
   Widget build(BuildContext context) {
     final hotelName = _args.hotel?.name ?? _args.hotelName;
+    final couponState = ref.watch(bookingCouponProvider);
 
     return Scaffold(
       backgroundColor: AvoraTheme.pageBg,
@@ -293,8 +323,18 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 children: [
-                  // Card 1: Tóm tắt thông tin phòng & thời gian đặt
-                  BookingStaySummaryCard(args: _args),
+                  // Card 1: Tóm tắt thông tin phòng, giá tiền và ưu đãi
+                  BookingStaySummaryCard(
+                    args: _args,
+                    subtotal: couponState.subtotal > 0
+                        ? couponState.subtotal
+                        : _args.totalPrice,
+                    discountAmount: couponState.discountAmount,
+                    finalTotal: couponState.totalAmount > 0
+                        ? couponState.totalAmount
+                        : null,
+                    appliedCouponCode: couponState.appliedCoupon?.code,
+                  ),
                   const SizedBox(height: 16),
 
                   // Card 2: Nhập thông tin người nhận phòng (Họ tên, SĐT)
@@ -324,6 +364,32 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
                     noteController: _noteController,
                     onNoteChanged: _handleFieldChanged,
                   ),
+                  const SizedBox(height: 16),
+
+                  // Card 4: Nhập & áp dụng mã giảm giá / Coupon / Voucher
+                  BookingCouponCard(
+                    couponController: _couponController,
+                    appliedCoupon: couponState.appliedCoupon,
+                    availableCoupons: couponState.availableCoupons,
+                    isApplying: couponState.isApplying,
+                    couponMessage: couponState.couponMessage,
+                    isSuccess: couponState.isSuccess,
+                    onApplyCoupon: () {
+                      ref
+                          .read(bookingCouponProvider.notifier)
+                          .applyCoupon(_couponController.text);
+                    },
+                    onRemoveCoupon: () {
+                      _couponController.clear();
+                      ref.read(bookingCouponProvider.notifier).removeCoupon();
+                    },
+                    onSelectAvailableCoupon: (code) {
+                      _couponController.text = code;
+                      ref
+                          .read(bookingCouponProvider.notifier)
+                          .applyCoupon(code);
+                    },
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -331,7 +397,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
           ),
 
           // Bottom Bar nút bấm lưu & tiếp tục
-          _buildBottomActionBar(),
+          _buildBottomActionBar(couponState),
         ],
       ),
     );
@@ -414,7 +480,13 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
     );
   }
 
-  Widget _buildBottomActionBar() {
+  Widget _buildBottomActionBar(BookingCouponState couponState) {
+    final currency = NumberFormat('#,###', 'vi_VN');
+    final currentTotal = couponState.totalAmount > 0
+        ? couponState.totalAmount
+        : (_args.totalPrice ?? 0);
+    final hasDiscount = couponState.discountAmount > 0;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
@@ -437,24 +509,50 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Usecase: Nhập thông tin khách',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AvoraTheme.textMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
                   Text(
                     _args.room?.name ?? _args.roomName,
                     style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AvoraTheme.primaryNavy,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AvoraTheme.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '${currency.format(currentTotal)} ₫',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AvoraTheme.primaryNavy,
+                        ),
+                      ),
+                      if (hasDiscount) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Text(
+                            '-${currency.format(couponState.discountAmount)} ₫',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

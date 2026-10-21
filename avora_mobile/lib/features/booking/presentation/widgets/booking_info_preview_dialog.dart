@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/guest_booking_info.dart';
 
@@ -120,6 +121,17 @@ class BookingInfoPreviewDialog extends StatelessWidget {
                 icon: Icons.edit_note_rounded,
                 title: 'Ghi chú thêm',
                 value: info.customNote.trim(),
+              ),
+            ],
+
+            if (info.couponCode != null && info.couponCode!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildInfoRow(
+                icon: Icons.discount_outlined,
+                title: 'Mã giảm giá đã áp dụng',
+                value:
+                    '${info.couponCode} (Giảm ${info.discountAmount != null ? "${NumberFormat('#,###', 'vi_VN').format(info.discountAmount)} ₫" : ""})',
+                isHighlight: true,
               ),
             ],
 

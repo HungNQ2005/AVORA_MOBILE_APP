@@ -7,10 +7,18 @@ import '../../data/models/booking_guest_info_args.dart';
 /// Giúp người dùng đối chiếu trong lúc điền thông tin khách nhận phòng.
 class BookingStaySummaryCard extends StatelessWidget {
   final BookingGuestInfoArgs args;
+  final num? subtotal;
+  final num? discountAmount;
+  final num? finalTotal;
+  final String? appliedCouponCode;
 
   const BookingStaySummaryCard({
     super.key,
     required this.args,
+    this.subtotal,
+    this.discountAmount,
+    this.finalTotal,
+    this.appliedCouponCode,
   });
 
   @override
@@ -21,6 +29,7 @@ class BookingStaySummaryCard extends StatelessWidget {
     final address = args.hotel?.fullAddress ?? args.hotel?.address ?? 'Đà Nẵng, Việt Nam';
     final starRating = args.hotel?.starRating ?? 9.2;
     final scoreLabel = args.hotel?.scoreLabel ?? 'Xuất sắc';
+    final currentSubtotal = subtotal ?? args.totalPrice;
 
     return Container(
       decoration: BoxDecoration(
@@ -166,15 +175,18 @@ class BookingStaySummaryCard extends StatelessWidget {
                   value: args.stayDates,
                 ),
 
-                if (args.totalPrice != null && args.totalPrice! > 0) ...[
+                // Chi tiết giá tiền và giảm giá
+                if (currentSubtotal != null && currentSubtotal > 0) ...[
                   const SizedBox(height: 14),
                   const Divider(height: 1, color: AvoraTheme.cardBorder),
                   const SizedBox(height: 12),
+
+                  // Tạm tính
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Tổng giá tiền ước tính:',
+                        'Tạm tính:',
                         style: TextStyle(
                           fontSize: 13,
                           color: AvoraTheme.textSecondary,
@@ -182,9 +194,74 @@ class BookingStaySummaryCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${currency.format(args.totalPrice)} ₫',
+                        '${currency.format(currentSubtotal)} ₫',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AvoraTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Dòng giảm giá (nếu có coupon)
+                  if (discountAmount != null && discountAmount! > 0) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.discount_outlined,
+                              size: 15,
+                              color: Color(0xFF059669),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              appliedCouponCode != null
+                                  ? 'Giảm giá ($appliedCouponCode):'
+                                  : 'Giảm giá coupon:',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF059669),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '-${currency.format(discountAmount)} ₫',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF059669),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 8),
+                  const Divider(height: 1, color: AvoraTheme.cardBorder),
+                  const SizedBox(height: 8),
+
+                  // Tổng chi phí
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Tổng chi phí thanh toán:',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AvoraTheme.primaryNavy,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '${currency.format(finalTotal ?? (currentSubtotal - (discountAmount ?? 0)))} ₫',
+                        style: const TextStyle(
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
                           color: AvoraTheme.primaryNavy,
                         ),

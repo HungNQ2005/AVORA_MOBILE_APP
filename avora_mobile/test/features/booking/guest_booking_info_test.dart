@@ -102,6 +102,58 @@ void main() {
 
       // Check action button
       expect(find.text('Tiếp tục'), findsOneWidget);
+
+      // Check coupon card and input
+      expect(find.text('Mã giảm giá / Voucher'), findsOneWidget);
+      expect(find.text('Nhập mã (VD: SAIGON10)'), findsOneWidget);
+      expect(find.text('Áp dụng'), findsOneWidget);
+    });
+
+    testWidgets('entering and applying coupon works in UI', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: BookingGuestInfoScreen(
+              args: BookingGuestInfoArgs(
+                hotelName: 'Avora Resort',
+                roomName: 'Deluxe Ocean View',
+                stayDates: '20/11/2026 - 22/11/2026',
+                nights: 2,
+                adults: 2,
+                children: 0,
+                rooms: 1,
+                totalPrice: 2000000,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Scroll down to make coupon card fully visible above bottom bar
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      // Enter coupon SAIGON10
+      final couponField = find.widgetWithText(TextFormField, 'Nhập mã (VD: SAIGON10)');
+      expect(couponField, findsOneWidget);
+      await tester.enterText(couponField, 'SAIGON10');
+      await tester.pump();
+
+      // Tap apply button
+      await tester.tap(find.text('Áp dụng'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // Should show Bỏ mã button
+      expect(find.text('Bỏ mã'), findsOneWidget);
     });
   });
 }

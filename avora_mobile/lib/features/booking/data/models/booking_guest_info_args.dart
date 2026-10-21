@@ -8,6 +8,8 @@ class BookingGuestInfoArgs extends Equatable {
   final String hotelName;
   final String roomName;
   final String stayDates;
+  final String checkInDate;
+  final String checkOutDate;
   final int nights;
   final int adults;
   final int children;
@@ -21,6 +23,8 @@ class BookingGuestInfoArgs extends Equatable {
     this.hotelName = 'Avora Grand Resort & Spa',
     this.roomName = 'Phòng Deluxe Hướng Biển',
     this.stayDates = 'Hôm nay - Ngày mai',
+    this.checkInDate = '',
+    this.checkOutDate = '',
     this.nights = 1,
     this.adults = 2,
     this.children = 0,
@@ -36,6 +40,8 @@ class BookingGuestInfoArgs extends Equatable {
         hotelName,
         roomName,
         stayDates,
+        checkInDate,
+        checkOutDate,
         nights,
         adults,
         children,

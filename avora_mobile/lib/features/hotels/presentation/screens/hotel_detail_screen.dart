@@ -103,6 +103,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
     RoomTypeDetailModel room,
     HotelDetailState state,
   ) {
+    final dateFmt = DateFormat('yyyy-MM-dd');
     context.push(
       AppRoutes.bookingGuestInfo,
       extra: BookingGuestInfoArgs(
@@ -111,6 +112,8 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
         hotelName: hotel.name,
         roomName: room.name,
         stayDates: state.formattedStayDates,
+        checkInDate: dateFmt.format(state.checkIn),
+        checkOutDate: dateFmt.format(state.checkOut),
         nights: state.nights,
         adults: state.adults,
         children: state.children,
