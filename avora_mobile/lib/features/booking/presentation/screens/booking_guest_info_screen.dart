@@ -7,12 +7,14 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/booking_guest_info_args.dart';
 import '../../data/models/guest_booking_info.dart';
+import '../../data/repositories/booking_repository.dart';
 import '../providers/booking_coupon_provider.dart';
 import '../widgets/booking_contact_info_card.dart';
 import '../widgets/booking_coupon_card.dart';
 import '../widgets/booking_info_preview_dialog.dart';
 import '../widgets/booking_special_requests_card.dart';
 import '../widgets/booking_stay_summary_card.dart';
+import '../widgets/booking_success_dialog.dart';
 
 /// Màn hình Nhập thông tin chi tiết của khách lưu trú (Họ tên, SĐT, Yêu cầu đặc biệt).
 /// Đồng bộ 100% với Usecase Đặt phòng và Schema validation của backend website Avora.
@@ -46,6 +48,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
   String? _firstNameError;
   String? _phoneError;
   bool _hasAttemptedSubmit = false;
+  bool _isSubmitting = false;
 
   late final BookingGuestInfoArgs _args;
 
@@ -118,50 +121,74 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
       if (_selectedRequests.contains(item)) {
         _selectedRequests.remove(item);
       } else {
-        _selectedRequests.add(item);
+        if (_selectedRequests.length < GuestBookingInfo.maxSpecialRequestOptions) {
+          _selectedRequests.add(item);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Tối đa ${GuestBookingInfo.maxSpecialRequestOptions} yêu cầu đặc biệt.',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     });
   }
 
   bool _validateInputs() {
-    final lastName = _lastNameController.text.trim();
-    final firstName = _firstNameController.text.trim();
+    bool valid = true;
+    final last = _lastNameController.text.trim();
+    final first = _firstNameController.text.trim();
     final phone = _phoneController.text.trim();
-    final fullName = [lastName, firstName].where((s) => s.isNotEmpty).join(' ');
 
-    String? lError;
-    String? fError;
-    String? pError;
-
-    // Validate Họ tên người nhận phòng (Họ tên đệm & Tên)
-    if (lastName.isEmpty && firstName.isEmpty) {
-      lError = 'Vui lòng nhập họ và tên đệm';
-      fError = 'Vui lòng nhập tên';
-    } else if (lastName.isEmpty) {
-      lError = 'Vui lòng nhập họ và tên đệm';
-    } else if (firstName.isEmpty) {
-      fError = 'Vui lòng nhập tên';
-    } else if (!GuestBookingInfo.isValidGuestName(fullName)) {
-      lError =
-          'Họ tên phải từ 2 - 100 ký tự, có chữ cái và không chứa số hay ký tự đặc biệt.';
+    // 1. Kiểm tra Họ đệm
+    if (last.isEmpty) {
+      _lastNameError = 'Vui lòng nhập Họ và tên đệm.';
+      valid = false;
+    } else if (last.length < 2) {
+      _lastNameError = 'Họ và tên đệm tối thiểu 2 ký tự.';
+      valid = false;
+    } else {
+      _lastNameError = null;
     }
 
-    // Validate Số điện thoại
+    // 2. Kiểm tra Tên
+    if (first.isEmpty) {
+      _firstNameError = 'Vui lòng nhập Tên của bạn.';
+      valid = false;
+    } else if (first.length < 2) {
+      _firstNameError = 'Tên phải có tối thiểu 2 ký tự.';
+      valid = false;
+    } else {
+      _firstNameError = null;
+    }
+
+    // 3. Kiểm tra tính hợp lệ toàn diện của tên
+    if (valid) {
+      final combinedName = '$last $first'.trim();
+      if (!GuestBookingInfo.isValidGuestName(combinedName)) {
+        _firstNameError = 'Họ tên chỉ được chứa chữ cái và dấu gạch nối.';
+        valid = false;
+      }
+    }
+
+    // 4. Kiểm tra Số điện thoại
     if (phone.isEmpty) {
-      pError = 'Vui lòng nhập số điện thoại liên hệ.';
+      _phoneError = 'Vui lòng nhập số điện thoại liên hệ.';
+      valid = false;
     } else if (!GuestBookingInfo.isValidGuestPhone(phone, _selectedCountryCode)) {
-      pError = _selectedCountryCode == '+84'
-          ? 'Số điện thoại Việt Nam không hợp lệ (10-11 chữ số, ví dụ 0905123456).'
-          : 'Số điện thoại quốc tế không hợp lệ.';
+      _phoneError = _selectedCountryCode == '+84'
+          ? 'Số điện thoại Việt Nam không hợp lệ (cần 10 số, bắt đầu 03, 05, 07, 08, 09).'
+          : 'Số điện thoại quốc tế không đúng định dạng.';
+      valid = false;
+    } else {
+      _phoneError = null;
     }
 
-    setState(() {
-      _lastNameError = lError;
-      _firstNameError = fError;
-      _phoneError = pError;
-    });
-
-    return lError == null && fError == null && pError == null;
+    setState(() {});
+    return valid;
   }
 
   void _handleFieldChanged() {
@@ -214,76 +241,109 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
         onEdit: () => Navigator.of(bottomSheetContext).pop(),
         onConfirm: () {
           Navigator.of(bottomSheetContext).pop();
-          _showBookingSuccessFeedback(guestInfo);
+          _submitBooking(guestInfo);
         },
       ),
     );
   }
 
-  void _showBookingSuccessFeedback(GuestBookingInfo guestInfo) {
-    final currency = NumberFormat('#,###', 'vi_VN');
+  /// Gửi đơn đặt phòng thực tế lên server backend (POST /api/bookings)
+  Future<void> _submitBooking(GuestBookingInfo guestInfo) async {
+    final hotelId = _args.hotel?.hotelId ?? '';
+    final roomTypeId = _args.room?.roomTypeId ?? '';
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: AvoraTheme.successGreen),
-            SizedBox(width: 8),
-            Text(
-              'Đã lưu thông tin khách',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AvoraTheme.primaryNavy,
-              ),
-            ),
-          ],
+    if (hotelId.isEmpty || roomTypeId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Thiếu thông tin khách sạn hoặc loại phòng cần đặt.'),
+          backgroundColor: AvoraTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('• Người đại diện: ${guestInfo.fullName}'),
-            const SizedBox(height: 4),
-            Text('• Số điện thoại: ${guestInfo.countryCode} ${guestInfo.phone}'),
-            const SizedBox(height: 4),
-            Text(
-              '• Yêu cầu: ${guestInfo.combinedSpecialRequest ?? "Không có"}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (guestInfo.couponCode != null && guestInfo.couponCode!.isNotEmpty) ...[
-              const SizedBox(height: 4),
+      );
+      return;
+    }
+
+    if (_args.checkInDate.isEmpty || _args.checkOutDate.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn ngày nhận phòng và ngày trả phòng hợp lệ.'),
+          backgroundColor: AvoraTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final result = await ref.read(bookingRepositoryProvider).createBooking(
+            hotelId: hotelId,
+            roomTypeId: roomTypeId,
+            quantity: _args.rooms,
+            checkInDate: _args.checkInDate,
+            checkOutDate: _args.checkOutDate,
+            guestName: guestInfo.fullName,
+            guestPhone: guestInfo.normalizedPhone,
+            specialRequest: guestInfo.combinedSpecialRequest,
+            couponCode: guestInfo.couponCode,
+            hotelName: _args.hotel?.name ?? _args.hotelName,
+            roomName: _args.room?.name ?? _args.roomName,
+          );
+
+      if (!mounted) return;
+
+      // Hiển thị dialog đặt phòng thành công
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => BookingSuccessDialog(
+          booking: result,
+          args: _args,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final cleanMsg = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: AvoraTheme.errorRed),
+              SizedBox(width: 8),
               Text(
-                '• Mã ưu đãi: ${guestInfo.couponCode} (-${currency.format(guestInfo.discountAmount ?? 0)} ₫)',
-                style: const TextStyle(
-                  color: Color(0xFF059669),
-                  fontWeight: FontWeight.w600,
-                ),
+                'Đặt phòng không thành công',
+                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700),
               ),
             ],
+          ),
+          content: Text(
+            cleanMsg,
+            style: const TextStyle(fontSize: 13.5, color: AvoraTheme.textSecondary, height: 1.45),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AvoraTheme.primaryNavy,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Đã hiểu'),
+            ),
           ],
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              if (context.canPop()) {
-                context.pop(guestInfo);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AvoraTheme.primaryNavy,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(100, 42),
-            ),
-            child: const Text('Hoàn tất'),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -300,6 +360,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
         ),
         leading: IconButton(
           onPressed: () {
+            if (_isSubmitting) return;
             if (context.canPop()) {
               context.pop();
             } else {
@@ -310,94 +371,135 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
         ),
         elevation: 0,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Stepper bar nhỏ gọn thể hiện quy trình booking
-          _buildStepProgressIndicator(),
+          Column(
+            children: [
+              // Stepper bar nhỏ gọn thể hiện quy trình booking
+              _buildStepProgressIndicator(),
 
-          // Nội dung cuộn chính
-          Expanded(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                children: [
-                  // Card 1: Tóm tắt thông tin phòng, giá tiền và ưu đãi
-                  BookingStaySummaryCard(
-                    args: _args,
-                    subtotal: couponState.subtotal > 0
-                        ? couponState.subtotal
-                        : _args.totalPrice,
-                    discountAmount: couponState.discountAmount,
-                    finalTotal: couponState.totalAmount > 0
-                        ? couponState.totalAmount
-                        : null,
-                    appliedCouponCode: couponState.appliedCoupon?.code,
-                  ),
-                  const SizedBox(height: 16),
+              // Nội dung cuộn chính
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    children: [
+                      // Card 1: Tóm tắt thông tin phòng, giá tiền và ưu đãi
+                      BookingStaySummaryCard(
+                        args: _args,
+                        subtotal: couponState.subtotal > 0
+                            ? couponState.subtotal
+                            : _args.totalPrice,
+                        discountAmount: couponState.discountAmount,
+                        finalTotal: couponState.totalAmount > 0
+                            ? couponState.totalAmount
+                            : null,
+                        appliedCouponCode: couponState.appliedCoupon?.code,
+                      ),
+                      const SizedBox(height: 16),
 
-                  // Card 2: Nhập thông tin người nhận phòng (Họ tên, SĐT)
-                  BookingContactInfoCard(
-                    lastNameController: _lastNameController,
-                    firstNameController: _firstNameController,
-                    phoneController: _phoneController,
-                    selectedCountryCode: _selectedCountryCode,
-                    onCountryCodeChanged: (newCode) {
-                      setState(() {
-                        _selectedCountryCode = newCode;
-                      });
-                      _handleFieldChanged();
-                    },
-                    lastNameError: _lastNameError,
-                    firstNameError: _firstNameError,
-                    phoneError: _phoneError,
-                    onFieldChanged: _handleFieldChanged,
-                  ),
-                  const SizedBox(height: 16),
+                      // Card 2: Nhập thông tin người nhận phòng (Họ tên, SĐT)
+                      BookingContactInfoCard(
+                        lastNameController: _lastNameController,
+                        firstNameController: _firstNameController,
+                        phoneController: _phoneController,
+                        selectedCountryCode: _selectedCountryCode,
+                        onCountryCodeChanged: (newCode) {
+                          setState(() {
+                            _selectedCountryCode = newCode;
+                          });
+                          _handleFieldChanged();
+                        },
+                        lastNameError: _lastNameError,
+                        firstNameError: _firstNameError,
+                        phoneError: _phoneError,
+                        onFieldChanged: _handleFieldChanged,
+                      ),
+                      const SizedBox(height: 16),
 
-                  // Card 3: Yêu cầu đặc biệt cho chỗ nghỉ
-                  BookingSpecialRequestsCard(
-                    hotelName: hotelName,
-                    selectedRequests: _selectedRequests.toList(),
-                    onToggleRequest: _toggleRequest,
-                    noteController: _noteController,
-                    onNoteChanged: _handleFieldChanged,
-                  ),
-                  const SizedBox(height: 16),
+                      // Card 3: Yêu cầu đặc biệt cho chỗ nghỉ
+                      BookingSpecialRequestsCard(
+                        hotelName: hotelName,
+                        selectedRequests: _selectedRequests.toList(),
+                        onToggleRequest: _toggleRequest,
+                        noteController: _noteController,
+                        onNoteChanged: _handleFieldChanged,
+                      ),
+                      const SizedBox(height: 16),
 
-                  // Card 4: Nhập & áp dụng mã giảm giá / Coupon / Voucher
-                  BookingCouponCard(
-                    couponController: _couponController,
-                    appliedCoupon: couponState.appliedCoupon,
-                    availableCoupons: couponState.availableCoupons,
-                    isApplying: couponState.isApplying,
-                    couponMessage: couponState.couponMessage,
-                    isSuccess: couponState.isSuccess,
-                    onApplyCoupon: () {
-                      ref
-                          .read(bookingCouponProvider.notifier)
-                          .applyCoupon(_couponController.text);
-                    },
-                    onRemoveCoupon: () {
-                      _couponController.clear();
-                      ref.read(bookingCouponProvider.notifier).removeCoupon();
-                    },
-                    onSelectAvailableCoupon: (code) {
-                      _couponController.text = code;
-                      ref
-                          .read(bookingCouponProvider.notifier)
-                          .applyCoupon(code);
-                    },
+                      // Card 4: Nhập & áp dụng mã giảm giá / Coupon / Voucher
+                      BookingCouponCard(
+                        couponController: _couponController,
+                        appliedCoupon: couponState.appliedCoupon,
+                        availableCoupons: couponState.availableCoupons,
+                        isApplying: couponState.isApplying,
+                        couponMessage: couponState.couponMessage,
+                        isSuccess: couponState.isSuccess,
+                        onApplyCoupon: () {
+                          ref
+                              .read(bookingCouponProvider.notifier)
+                              .applyCoupon(_couponController.text);
+                        },
+                        onRemoveCoupon: () {
+                          _couponController.clear();
+                          ref.read(bookingCouponProvider.notifier).removeCoupon();
+                        },
+                        onSelectAvailableCoupon: (code) {
+                          _couponController.text = code;
+                          ref
+                              .read(bookingCouponProvider.notifier)
+                              .applyCoupon(code);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
-            ),
+
+              // Bottom Bar nút bấm lưu & tiếp tục
+              _buildBottomActionBar(couponState),
+            ],
           ),
 
-          // Bottom Bar nút bấm lưu & tiếp tục
-          _buildBottomActionBar(couponState),
+          // Loading Overlay khi đang gửi đơn đặt phòng
+          if (_isSubmitting)
+            Container(
+              color: Colors.black.withValues(alpha: 0.35),
+              child: const Center(
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AvoraTheme.primaryNavy),
+                        SizedBox(height: 16),
+                        Text(
+                          'Đang xử lý đặt phòng...',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: AvoraTheme.primaryNavy,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Vui lòng không đóng ứng dụng',
+                          style: TextStyle(fontSize: 12, color: AvoraTheme.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -559,7 +661,7 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: _handleSubmit,
+              onPressed: _isSubmitting ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AvoraTheme.actionBlue,
                 foregroundColor: Colors.white,
@@ -570,17 +672,26 @@ class _BookingGuestInfoScreenState extends ConsumerState<BookingGuestInfoScreen>
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Tiếp tục',
-                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_rounded, size: 18),
-                ],
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Tiếp tục',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
+                    ),
             ),
           ],
         ),
