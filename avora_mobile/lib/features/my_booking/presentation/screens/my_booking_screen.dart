@@ -1,588 +1,447 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:avora_mobile/core/router/app_router.dart';
+import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 
-import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../booking/data/models/booking_detail_model.dart';
-import '../../../booking/presentation/providers/booking_detail_provider.dart';
+import '../../data/models/booking_item_model.dart';
+import '../providers/my_booking_provider.dart';
+import '../widgets/booking_card.dart';
+import '../widgets/booking_filter_bar.dart';
+import '../widgets/booking_support_banner.dart';
+import '../widgets/booking_voucher_sheet.dart';
+import '../widgets/cancel_booking_modal.dart';
+import '../widgets/date_change_modal.dart';
+import '../widgets/edit_guest_modal.dart';
 
-/// Màn hình Quản lý Đặt chỗ của tôi (My Bookings Screen).
-/// Tích hợp dữ liệu thật từ Backend AVORA với 2 tab: "Sắp tới" và "Lịch sử".
-/// Cho phép người dùng xem danh sách và nhấn chọn để xem chi tiết từng đơn đặt phòng.
-class MyBookingScreen extends StatelessWidget {
+class MyBookingScreen extends ConsumerStatefulWidget {
   const MyBookingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Kiểm tra an toàn: nếu widget được render trong môi trường test thiếu ProviderScope
-    // thì hiển thị giao diện mặc định mà không kích hoạt gọi mạng.
-    bool hasScope = true;
-    try {
-      ProviderScope.containerOf(context, listen: false);
-    } catch (_) {
-      hasScope = false;
-    }
+  ConsumerState<MyBookingScreen> createState() => _MyBookingScreenState();
+}
 
-    if (!hasScope) {
-      return const _MyBookingScaffold(
-        upcomingChild: _BookingUnavailablePanel(
-          title: 'Đặt chỗ sắp tới sẽ ở đây',
-          description:
-              'Hãy tìm một chỗ dừng chân cho chuyến đi sắp tới của bạn và đặt phòng ngay hôm nay.',
+class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
+  bool _showHistory = false;
+
+  Future<void> _openVoucher(BookingItemModel booking) async {
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFF003580)),
+      ),
+    );
+
+    await notifier.loadVoucher(booking.bookingId);
+    if (!mounted) return;
+
+    Navigator.of(context, rootNavigator: true).pop();
+    final state = ref.read(myBookingNotifierProvider);
+    if (state.selectedVoucher != null) {
+      await BookingVoucherSheet.show(context, state.selectedVoucher!);
+    } else if (state.errorMessage != null) {
+      _showMessage(state.errorMessage!, isError: true);
+    }
+  }
+
+  Future<void> _editGuest(BookingItemModel booking) async {
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
+    final saved = await EditGuestModal.show(
+      context,
+      booking: booking,
+      onSave:
+          ({
+            required String guestName,
+            required String guestPhone,
+            String? specialRequest,
+          }) => notifier.updateGuestInfo(
+            booking.bookingId,
+            guestName: guestName,
+            guestPhone: guestPhone,
+            specialRequest: specialRequest,
+          ),
+    );
+
+    if (saved == true && mounted) {
+      _showMessage('Cập nhật thông tin khách thành công!');
+    }
+  }
+
+  Future<void> _changeDates(BookingItemModel booking) async {
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
+    final changed = await DateChangeModal.show(
+      context,
+      booking: booking,
+      onConfirmDateChange:
+          ({required String checkInDate, required String checkOutDate}) =>
+              notifier.changeBookingDates(
+                booking.bookingId,
+                checkInDate: checkInDate,
+                checkOutDate: checkOutDate,
+              ),
+    );
+
+    if (changed == true && mounted) {
+      _showMessage('Đổi ngày lưu trú thành công!');
+    }
+  }
+
+  Future<void> _cancelBooking(BookingItemModel booking) async {
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
+    final cancelled = await CancelBookingModal.show(
+      context,
+      booking: booking,
+      onConfirmCancel: ({required String reason}) =>
+          notifier.cancelBooking(booking.bookingId, reason: reason),
+    );
+
+    if (cancelled == true && mounted) {
+      _showMessage('Đã hủy đơn đặt phòng thành công!');
+    }
+  }
+
+  void _rebook(BookingItemModel booking) {
+    final hotelId = booking.hotel.hotelId;
+    context.push(
+      hotelId.isNotEmpty
+          ? AppRoutes.hotelDetailPath(hotelId)
+          : AppRoutes.hotelSearch,
+    );
+  }
+
+  void _changeGroup(bool showHistory) {
+    setState(() => _showHistory = showHistory);
+    final targetTab = showHistory ? 'all' : 'upcoming';
+    ref.read(myBookingNotifierProvider.notifier).changeTab(targetTab);
+  }
+
+  void _changeStatusFilter(String tab) {
+    if (tab == 'upcoming') {
+      setState(() => _showHistory = false);
+    } else if (tab == 'completed' || tab == 'cancelled') {
+      setState(() => _showHistory = true);
+    }
+    ref.read(myBookingNotifierProvider.notifier).changeTab(tab);
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(myBookingNotifierProvider);
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
+    final authState = ref.watch(authNotifierProvider);
+    final user = authState is AuthSuccess ? authState.user : null;
+    final role = (user?.role ?? '').toUpperCase();
+    final isVendor = role.contains('VEN') || role.contains('VENDOR');
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF003580),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Quay lại',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
         ),
-        historyChild: _BookingUnavailablePanel(
-          title: 'Lịch sử đặt chỗ chưa khả dụng',
-          description:
-              'Những điểm dừng chân của bạn sẽ xuất hiện trong tương lai chúng ta đồng hành cùng nhau.',
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Quản lý Đặt Chỗ & Lịch Sử',
+              style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              isVendor
+                  ? 'VENDOR / ĐỐI TÁC'
+                  : 'Trung tâm điều hành chuyến đi Avora',
+              style: const TextStyle(fontSize: 11, color: Color(0xFFBFDBFE)),
+            ),
+          ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, size: 21),
+            tooltip: 'Làm mới',
+            onPressed: () => notifier.loadBookings(),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          BookingFilterBar(
+            activeTab: state.activeTab,
+            onTabChange: _changeStatusFilter,
+            counts: state.counts,
+            searchQuery: state.searchQuery,
+            onSearchSubmitted: notifier.setSearchQuery,
+            timeRange: state.timeRange,
+            onTimeRangeChanged: notifier.setTimeRange,
+            availableYears: state.availableYears,
+            requireVatOnly: state.requireVatOnly,
+            onToggleVatOnly: notifier.toggleVatOnly,
+          ),
+          _BookingGroupSelector(
+            showHistory: _showHistory,
+            upcomingCount: state.counts.upcoming,
+            historyCount: state.counts.completed + state.counts.cancelled,
+            onChanged: _changeGroup,
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              color: const Color(0xFF003580),
+              onRefresh: () => notifier.loadBookings(silent: true),
+              child: _buildBodyContent(state),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBodyContent(MyBookingState state) {
+    if (state.isLoading && state.bookings.isEmpty) {
+      return ListView(
+        physics: AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xFF003580)),
+            ),
+          ),
+        ],
       );
     }
 
-    return const _MyBookingConnectedContent();
-  }
-}
-
-class _MyBookingConnectedContent extends ConsumerWidget {
-  const _MyBookingConnectedContent();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bookingsAsync = ref.watch(myAllBookingsProvider);
-
-    return bookingsAsync.when(
-      loading: () => const _MyBookingScaffold(
-        upcomingChild: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AvoraTheme.primaryNavy),
-          ),
-        ),
-        historyChild: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AvoraTheme.primaryNavy),
-          ),
-        ),
-      ),
-      error: (error, _) => _MyBookingScaffold(
-        onRefresh: () => ref.invalidate(myAllBookingsProvider),
-        upcomingChild: _buildErrorState(context, ref, error),
-        historyChild: _buildErrorState(context, ref, error),
-      ),
-      data: (bookings) {
-        final upcomingBookings = bookings
-            .where((b) => b.statusBadgeVariant != 'completed' && b.statusBadgeVariant != 'cancelled')
-            .toList();
-
-        final historyBookings = bookings
-            .where((b) => b.statusBadgeVariant == 'completed' || b.statusBadgeVariant == 'cancelled')
-            .toList();
-
-        return _MyBookingScaffold(
-          onRefresh: () => ref.invalidate(myAllBookingsProvider),
-          upcomingChild: RefreshIndicator(
-            color: AvoraTheme.primaryNavy,
-            onRefresh: () async {
-              ref.invalidate(myAllBookingsProvider);
-              await ref.read(myAllBookingsProvider.future);
-            },
-            child: upcomingBookings.isEmpty
-                ? const SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    child: _BookingUnavailablePanel(
-                      title: 'Đặt chỗ sắp tới sẽ ở đây',
-                      description:
-                          'Hãy tìm một chỗ dừng chân cho chuyến đi sắp tới của bạn và đặt phòng ngay hôm nay.',
+    if (state.errorMessage != null && state.bookings.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: Color(0xFFDC2626),
+                      size: 48,
                     ),
-                  )
-                : ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: upcomingBookings.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 14),
-                    itemBuilder: (context, index) {
-                      return _BookingCardItem(booking: upcomingBookings[index]);
-                    },
-                  ),
-          ),
-          historyChild: RefreshIndicator(
-            color: AvoraTheme.primaryNavy,
-            onRefresh: () async {
-              ref.invalidate(myAllBookingsProvider);
-              await ref.read(myAllBookingsProvider.future);
-            },
-            child: historyBookings.isEmpty
-                ? const SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    child: _BookingUnavailablePanel(
-                      title: 'Lịch sử đặt chỗ chưa khả dụng',
-                      description:
-                          'Những điểm dừng chân của bạn sẽ xuất hiện trong tương lai chúng ta đồng hành cùng nhau.',
+                    const SizedBox(height: 12),
+                    Text(state.errorMessage!, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ref
+                          .read(myBookingNotifierProvider.notifier)
+                          .loadBookings(),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Thử lại'),
                     ),
-                  )
-                : ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: historyBookings.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 14),
-                    itemBuilder: (context, index) {
-                      return _BookingCardItem(booking: historyBookings[index]);
-                    },
-                  ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AvoraTheme.errorRed),
-            const SizedBox(height: 12),
-            const Text(
-              'Không thể tải danh sách đặt phòng',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AvoraTheme.textPrimary),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              error.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AvoraTheme.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => ref.invalidate(myAllBookingsProvider),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Thử lại'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AvoraTheme.primaryNavy,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MyBookingScaffold extends StatelessWidget {
-  final Widget upcomingChild;
-  final Widget historyChild;
-  final VoidCallback? onRefresh;
-
-  const _MyBookingScaffold({
-    required this.upcomingChild,
-    required this.historyChild,
-    this.onRefresh,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AvoraTheme.pageBg,
-        appBar: AppBar(
-          backgroundColor: AvoraTheme.primaryNavy,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: 'Quay lại',
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(AppRoutes.home);
-              }
-            },
-          ),
-          title: const Text(
-            'Đặt chỗ của tôi',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          actions: onRefresh != null
-              ? [
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Làm mới',
-                    onPressed: onRefresh,
-                  ),
-                ]
-              : null,
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            indicatorWeight: 3,
-            labelColor: Colors.white,
-            unselectedLabelColor: Color(0xFFBFDBFE),
-            labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            tabs: [
-              Tab(text: 'Sắp tới'),
-              Tab(text: 'Lịch sử'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            upcomingChild,
-            historyChild,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Thẻ hiển thị tóm tắt một đơn đặt phòng trong danh sách
-class _BookingCardItem extends StatelessWidget {
-  final BookingDetailModel booking;
-
-  const _BookingCardItem({required this.booking});
-
-  @override
-  Widget build(BuildContext context) {
-    final currency = NumberFormat('#,###', 'vi_VN');
-    final statusVisuals = _getStatusVisuals(booking.statusBadgeVariant);
-
-    return InkWell(
-      onTap: () {
-        context.push(AppRoutes.bookingDetailPath(booking.bookingId));
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AvoraTheme.cardBorder),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header thẻ: Mã đơn & Trạng thái
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '#${booking.bookingCode}',
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AvoraTheme.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: statusVisuals.bgColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusVisuals.borderColor),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(statusVisuals.icon, size: 12, color: statusVisuals.textColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          booking.statusName,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: statusVisuals.textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const Divider(height: 1, color: AvoraTheme.cardBorder),
-
-            // Thân thẻ: Ảnh + Tên khách sạn & Lịch trình
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Ảnh khách sạn
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      width: 76,
-                      height: 76,
-                      color: const Color(0xFFE2E8F0),
-                      child: booking.hotelThumbnailUrl != null && booking.hotelThumbnailUrl!.isNotEmpty
-                          ? Image.network(
-                              booking.hotelThumbnailUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.hotel_rounded,
-                                size: 32,
-                                color: AvoraTheme.textMuted,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.hotel_rounded,
-                              size: 32,
-                              color: AvoraTheme.textMuted,
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Thông tin khách sạn & phòng
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          booking.hotelName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AvoraTheme.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          booking.roomTypeName,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: AvoraTheme.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_rounded, size: 13, color: AvoraTheme.textMuted),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                '${booking.checkInDate} → ${booking.checkOutDate} (${booking.nights} đêm)',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: AvoraTheme.textMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const Divider(height: 1, color: AvoraTheme.cardBorder),
-
-            // Footer thẻ: Giá & Nút Xem chi tiết
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tổng thanh toán',
-                        style: TextStyle(fontSize: 11, color: AvoraTheme.textMuted),
-                      ),
-                      Text(
-                        '${currency.format(booking.totalAmount)} ₫',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AvoraTheme.primaryNavy,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.push(AppRoutes.bookingDetailPath(booking.bookingId));
-                    },
-                    icon: const Icon(Icons.arrow_forward_rounded, size: 15),
-                    label: const Text('Xem chi tiết', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AvoraTheme.primaryNavy,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      minimumSize: const Size(0, 36),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static ({Color bgColor, Color textColor, Color borderColor, IconData icon}) _getStatusVisuals(String variant) {
-    return switch (variant) {
-      'cancelled' => (
-          bgColor: const Color(0xFFFEF2F2),
-          textColor: const Color(0xFFDC2626),
-          borderColor: const Color(0xFFFECACA),
-          icon: Icons.cancel_rounded,
-        ),
-      'pending' => (
-          bgColor: const Color(0xFFFFFBEB),
-          textColor: const Color(0xFFD97706),
-          borderColor: const Color(0xFFFDE68A),
-          icon: Icons.schedule_rounded,
-        ),
-      'completed' => (
-          bgColor: const Color(0xFFEFF6FF),
-          textColor: const Color(0xFF2563EB),
-          borderColor: const Color(0xFFBFDBFE),
-          icon: Icons.task_alt_rounded,
-        ),
-      _ => (
-          bgColor: const Color(0xFFECFDF5),
-          textColor: const Color(0xFF059669),
-          borderColor: const Color(0xFFA7F3D0),
-          icon: Icons.check_circle_rounded,
-        ),
-    };
-  }
-}
-
-class _BookingUnavailablePanel extends StatelessWidget {
-  final String title;
-  final String description;
-
-  const _BookingUnavailablePanel({
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 104,
-              height: 104,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
-                borderRadius: BorderRadius.circular(32),
-              ),
-              child: const Icon(
-                Icons.luggage_outlined,
-                color: Color(0xFF0284C7),
-                size: 52,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Color(0xFFB45309),
-                    size: 20,
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Dữ liệu đặt chỗ chưa được kết nối. Thông tin sẽ xuất hiện ở đây khi dịch vụ sẵn sàng.',
-                      style: TextStyle(
-                        color: Color(0xFF92400E),
-                        fontSize: 12,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => context.push(AppRoutes.hotelSearch),
-                icon: const Icon(Icons.search),
-                label: const Text('Khám phá khách sạn'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF003580),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
+        ],
+      );
+    }
+
+    final groupBookings = state.visibleBookings.where((booking) {
+      return _showHistory
+          ? booking.category == 'completed' || booking.category == 'cancelled'
+          : booking.category == 'upcoming';
+    }).toList();
+
+    if (groupBookings.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: Text(
+                _showHistory
+                    ? 'Lịch sử đặt chỗ chưa khả dụng'
+                    : 'Đặt chỗ sắp tới sẽ ở đây',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 15),
+              ),
+            ),
+          ),
+          const BookingSupportBanner(),
+        ],
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: [
+        _buildSectionHeader(
+          title: _showHistory ? 'Lịch sử đặt chỗ' : 'Chuyến Đi Sắp Tới',
+          count: groupBookings.length,
         ),
+        ...groupBookings.map(_buildBookingCard),
+        const SizedBox(height: 12),
+        const BookingSupportBanner(),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader({required String title, required int count}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          Text(
+            '$count đơn',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF475569),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingCard(BookingItemModel booking) {
+    return BookingCard(
+      key: ValueKey(booking.bookingId),
+      booking: booking,
+      onOpenDetails: () =>
+          context.push(AppRoutes.bookingDetailPath(booking.bookingId)),
+      onOpenVoucher: () => _openVoucher(booking),
+      onOpenEditGuest: booking.category == 'upcoming'
+          ? () => _editGuest(booking)
+          : null,
+      onOpenDateChange: booking.category == 'upcoming'
+          ? () => _changeDates(booking)
+          : null,
+      onOpenCancel: booking.category == 'upcoming'
+          ? () => _cancelBooking(booking)
+          : null,
+      onRebook: () => _rebook(booking),
+    );
+  }
+}
+
+class _BookingGroupSelector extends StatelessWidget {
+  final bool showHistory;
+  final int upcomingCount;
+  final int historyCount;
+  final ValueChanged<bool> onChanged;
+
+  const _BookingGroupSelector({
+    required this.showHistory,
+    required this.upcomingCount,
+    required this.historyCount,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _BookingGroupButton(
+              label: 'Chuyến sắp tới',
+              count: upcomingCount,
+              isSelected: !showHistory,
+              onTap: () => onChanged(false),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _BookingGroupButton(
+              label: 'Lịch sử',
+              count: historyCount,
+              isSelected: showHistory,
+              onTap: () => onChanged(true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingGroupButton extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _BookingGroupButton({
+    required this.label,
+    required this.count,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected
+        ? const Color(0xFF003580)
+        : const Color(0xFF64748B);
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        backgroundColor: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+        side: BorderSide(
+          color: isSelected ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label),
+          const SizedBox(width: 6),
+          Text(
+            '$count',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
