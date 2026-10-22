@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../my_booking/data/models/booking_countdown_helper.dart';
@@ -51,11 +53,14 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat('#,###', 'vi_VN');
-    final hotelName = widget.booking.hotelName ??
+    final hotelName =
+        widget.booking.hotelName ??
         widget.args.hotel?.name ??
         widget.args.hotelName;
     final roomName =
-        widget.booking.roomName ?? widget.args.room?.name ?? widget.args.roomName;
+        widget.booking.roomName ??
+        widget.args.room?.name ??
+        widget.args.roomName;
 
     final createdAtStr =
         widget.booking.createdAt ?? _fallbackCreatedAt.toIso8601String();
@@ -156,9 +161,7 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              countdown.expired
-                                  ? 'Đơn đặt phòng đã hết hạn'
-                                  : 'Vui lòng hoàn tất thanh toán trong 10 phút',
+                              countdown.expired ? 'Đơn đặt phòng đã hết hạn' : 'Vui lòng hoàn tất thanh toán trong 10 phút',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -180,14 +183,12 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
                                 children: countdown.expired
                                     ? const [
                                         TextSpan(
-                                          text:
-                                              'Đơn sẽ được hệ thống tự động hủy.',
+                                          text: 'Đơn sẽ được hệ thống tự động hủy.',
                                         ),
                                       ]
                                     : [
                                         const TextSpan(
-                                          text:
-                                              'Nếu không thanh toán, đơn sẽ tự động hủy sau ',
+                                          text: 'Nếu không thanh toán, đơn sẽ tự động hủy sau ',
                                         ),
                                         TextSpan(
                                           text: countdown.label,
@@ -211,7 +212,10 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
               // Khung hiển thị Mã đơn đặt chỗ
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
@@ -219,8 +223,11 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.confirmation_number_outlined,
-                        size: 20, color: AvoraTheme.primaryNavy),
+                    const Icon(
+                      Icons.confirmation_number_outlined,
+                      size: 20,
+                      color: AvoraTheme.primaryNavy,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -253,10 +260,13 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
                       color: AvoraTheme.actionBlue,
                       onPressed: () {
                         Clipboard.setData(
-                            ClipboardData(text: widget.booking.bookingCode));
+                          ClipboardData(text: widget.booking.bookingCode),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Đã sao chép mã đặt chỗ vào bộ nhớ tạm'),
+                            content: Text(
+                              'Đã sao chép mã đặt chỗ vào bộ nhớ tạm',
+                            ),
                             duration: Duration(seconds: 2),
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -370,7 +380,9 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    context.push(AppRoutes.bookingDetailPath(booking.bookingId));
+                    context.push(
+                      AppRoutes.bookingDetailPath(widget.booking.bookingId),
+                    );
                   },
                   icon: const Icon(Icons.receipt_long_rounded, size: 18),
                   label: const Text(
@@ -458,11 +470,14 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
           child: RichText(
             text: TextSpan(
               style: const TextStyle(
-                  fontSize: 12.5, color: AvoraTheme.textSecondary),
+                fontSize: 12.5,
+                color: AvoraTheme.textSecondary,
+              ),
               children: [
                 TextSpan(
-                    text: '$label: ',
-                    style: const TextStyle(color: AvoraTheme.textMuted)),
+                  text: '$label: ',
+                  style: const TextStyle(color: AvoraTheme.textMuted),
+                ),
                 TextSpan(
                   text: value,
                   style: TextStyle(
