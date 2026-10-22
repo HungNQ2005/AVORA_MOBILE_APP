@@ -4,15 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:avora_mobile/core/router/app_router.dart';
-import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:avora_mobile/features/home/presentation/providers/home_provider.dart';
 
 import '../../data/models/hotel_detail_model.dart';
 import '../../data/models/room_capacity_helper.dart';
 import '../providers/hotel_detail_provider.dart';
-import '../widgets/hotel_detail_booking_modal.dart';
 import '../widgets/hotel_detail_lightbox.dart';
 import '../widgets/hotel_detail_map_modal.dart';
+import '../../../booking/data/models/booking_guest_info_args.dart';
 class HotelDetailScreen extends ConsumerStatefulWidget {
   final String hotelId;
 
@@ -104,22 +103,23 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
     RoomTypeDetailModel room,
     HotelDetailState state,
   ) {
-    final authState = ref.read(authNotifierProvider);
-    final user = authState is AuthSuccess ? authState.user : null;
-    final guestName = user?.fullName ?? user?.email ?? 'Khách hàng Avora';
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => HotelDetailBookingModal(
+    final dateFmt = DateFormat('yyyy-MM-dd');
+    context.push(
+      AppRoutes.bookingGuestInfo,
+      extra: BookingGuestInfoArgs(
         hotel: hotel,
         room: room,
-        guestName: guestName,
-        formattedStayDates: state.formattedStayDates,
+        hotelName: hotel.name,
+        roomName: room.name,
+        stayDates: state.formattedStayDates,
+        checkInDate: dateFmt.format(state.checkIn),
+        checkOutDate: dateFmt.format(state.checkOut),
         nights: state.nights,
         adults: state.adults,
         children: state.children,
         rooms: state.rooms,
-        onComplete: () => Navigator.of(ctx).pop(),
+        pricePerNight: room.price,
+        totalPrice: room.price * state.nights * state.rooms,
       ),
     );
   }
