@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/booking_item_model.dart';
+import '../models/booking_review_model.dart';
 
 /// Provider cung cấp MyBookingRepository
 final myBookingRepositoryProvider = Provider<MyBookingRepository>((ref) {
@@ -167,5 +168,86 @@ class MyBookingRepository {
     } catch (e) {
       throw Exception('Lỗi hủy phòng: $e');
     }
+  }
+
+  Future<BookingReviewAvailability> fetchBookingReview(String bookingId) async {
+    try {
+      final response = await _dio.get('/reviews/bookings/$bookingId');
+      return BookingReviewAvailability.fromJson(
+        _reviewResponseData(response.data),
+      );
+    } on DioException catch (e) {
+      throw Exception(_reviewErrorMessage(e, 'Không thể tải đánh giá.'));
+    }
+  }
+
+  Future<BookingReviewModel> createBookingReview(
+    String bookingId, {
+    required int ratingScore,
+    String? comment,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/reviews/bookings/$bookingId',
+        data: {'rating_score': ratingScore, 'comment': comment?.trim()},
+      );
+      return _reviewMutation(response.data);
+    } on DioException catch (e) {
+      throw Exception(_reviewErrorMessage(e, 'Không thể gửi đánh giá.'));
+    }
+  }
+
+  Future<BookingReviewModel> updateBookingReview(
+    String reviewId, {
+    required int ratingScore,
+    String? comment,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/reviews/$reviewId',
+        data: {'rating_score': ratingScore, 'comment': comment?.trim()},
+      );
+      return _reviewMutation(response.data);
+    } on DioException catch (e) {
+      throw Exception(_reviewErrorMessage(e, 'Không thể cập nhật đánh giá.'));
+    }
+  }
+
+  Future<void> deleteBookingReview(
+    String reviewId, {
+    required String reasonCode,
+    String? reasonText,
+  }) async {
+    try {
+      final reason = <String, dynamic>{'reason_code': reasonCode};
+      if (reasonCode == 'OTHER') reason['reason_text'] = reasonText?.trim();
+      await _dio.delete('/reviews/$reviewId', data: reason);
+    } on DioException catch (e) {
+      throw Exception(_reviewErrorMessage(e, 'Không thể xóa đánh giá.'));
+    }
+  }
+
+  Map<String, dynamic> _reviewResponseData(dynamic response) {
+    if (response is Map && response['data'] is Map) {
+      return Map<String, dynamic>.from(response['data'] as Map);
+    }
+    throw Exception('Dữ liệu đánh giá không đúng định dạng.');
+  }
+
+  BookingReviewModel _reviewMutation(dynamic response) {
+    final data = _reviewResponseData(response);
+    final review = data['review'];
+    if (review is! Map) {
+      throw Exception('Dữ liệu đánh giá không đúng định dạng.');
+    }
+    return BookingReviewModel.fromJson(Map<String, dynamic>.from(review));
+  }
+
+  String _reviewErrorMessage(DioException error, String fallback) {
+    final data = error.response?.data;
+    final message = data is Map ? data['message']?.toString() : null;
+    return message?.trim().isNotEmpty == true
+        ? message!.trim()
+        : error.message ?? fallback;
   }
 }

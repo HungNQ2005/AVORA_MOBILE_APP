@@ -5,6 +5,7 @@ import 'package:avora_mobile/core/router/app_router.dart';
 import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 
 import '../../data/models/booking_item_model.dart';
+import '../../data/repositories/my_booking_repository.dart';
 import '../providers/my_booking_provider.dart';
 import '../widgets/booking_card.dart';
 import '../widgets/booking_filter_bar.dart';
@@ -13,6 +14,7 @@ import '../widgets/booking_voucher_sheet.dart';
 import '../widgets/cancel_booking_modal.dart';
 import '../widgets/date_change_modal.dart';
 import '../widgets/edit_guest_modal.dart';
+import '../widgets/review_widget_modal.dart';
 
 /// Màn hình Quản lý đặt phòng và lịch sử lưu trú cá nhân
 /// Hỗ trợ cả người dùng thông thường và Vendor (đối tác quản lý chỗ nghỉ)
@@ -131,6 +133,14 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
     if (success == true && mounted) {
       _showSnackBar('Đã hủy đơn đặt phòng thành công!');
     }
+  }
+
+  Future<void> _handleOpenReview(BookingItemModel booking) async {
+    await ReviewWidgetModal.show(
+      context,
+      booking: booking,
+      repository: ref.read(myBookingRepositoryProvider),
+    );
   }
 
   /// Đặt lại phòng tại khách sạn này
@@ -378,13 +388,13 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
             title: state.activeTab == 'upcoming'
                 ? 'Chuyến Đi Sắp Tới Của Bạn'
                 : state.activeTab == 'completed'
-                    ? 'Kỳ Nghỉ Đã Hoàn Thành'
-                    : 'Đơn Đặt Phòng Đã Hủy',
+                ? 'Kỳ Nghỉ Đã Hoàn Thành'
+                : 'Đơn Đặt Phòng Đã Hủy',
             dotColor: state.activeTab == 'upcoming'
                 ? const Color(0xFF10B981)
                 : state.activeTab == 'completed'
-                    ? const Color(0xFF3B82F6)
-                    : const Color(0xFF94A3B8),
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF94A3B8),
             countBadge: '${visibleBookings.length} đơn',
           ),
           ...visibleBookings.map((b) => _buildBookingCard(b)),
@@ -406,6 +416,7 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
       onOpenDateChange: () => _handleOpenDateChange(booking),
       onOpenCancel: () => _handleOpenCancel(booking),
       onRebook: () => _handleRebook(booking),
+      onOpenReview: () => _handleOpenReview(booking),
     );
   }
 

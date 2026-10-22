@@ -12,6 +12,7 @@ class BookingCard extends StatelessWidget {
   final VoidCallback? onOpenDateChange;
   final VoidCallback? onOpenCancel;
   final VoidCallback? onRebook;
+  final VoidCallback? onOpenReview;
 
   const BookingCard({
     super.key,
@@ -21,6 +22,7 @@ class BookingCard extends StatelessWidget {
     this.onOpenDateChange,
     this.onOpenCancel,
     this.onRebook,
+    this.onOpenReview,
   });
 
   @override
@@ -29,6 +31,10 @@ class BookingCard extends StatelessWidget {
     final isUpcoming = booking.category == 'upcoming';
     final isCompleted = booking.category == 'completed';
     final isCancelled = booking.category == 'cancelled';
+    final statusCode = (booking.bookingStatusCd ?? booking.statusCodeName)
+        .trim()
+        .toUpperCase();
+    final canReview = ['2', 'CFM'].contains(statusCode);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -284,7 +290,7 @@ class BookingCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (booking.stay.daysLeftText.isNotEmpty && isUpcoming) ...[
+                        if (booking.stay.daysLeftText.isNotEmpty && isUpcoming) ...[
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -560,6 +566,27 @@ class BookingCard extends StatelessWidget {
                 ],
 
                 // Hành động cho đơn Đã hoàn thành hoặc Đã hủy
+                if (canReview && onOpenReview != null)
+                  OutlinedButton.icon(
+                    onPressed: onOpenReview,
+                    icon: const Icon(Icons.rate_review_outlined, size: 16),
+                    label: const Text('Đánh giá'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF047857),
+                      side: const BorderSide(color: Color(0xFF6EE7B7)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 if ((isCompleted || isCancelled) && onRebook != null)
                   OutlinedButton.icon(
                     onPressed: onRebook,

@@ -83,6 +83,9 @@ void main() {
     // 1. Kiểm tra AppBar & User greeting
     expect(find.text('AVORA'), findsOneWidget);
     expect(find.text('Xin chào, Nguyễn Văn A'), findsOneWidget);
+    expect(find.byKey(const Key('open_profile_button')), findsOneWidget);
+    expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.notifications_none), findsOneWidget);
 
     // 2. Kiểm tra Hero & Guarantee Badge
     expect(find.text('Cam kết giá tốt nhất thị trường Việt Nam'), findsOneWidget);
@@ -109,6 +112,7 @@ void main() {
     // 7. Kiểm tra Section Khách sạn yêu thích
     expect(find.text('Chỗ nghỉ được khách yêu thích nhất'), findsOneWidget);
     expect(find.text('Avora Da Nang Resort'), findsOneWidget);
+    expect(find.byIcon(Icons.apartment_rounded), findsOneWidget);
   });
 
   testWidgets('✅ Bấm vào bộ lọc nhanh chuyển đổi trạng thái', (tester) async {
