@@ -32,6 +32,9 @@ class AppRoutes {
   static const String bookingGuestInfo = '/booking/guest-info';
 }
 
+/// Navigator key gốc, dùng để mở popup (vd: AI Chat) từ bất kỳ màn hình nào.
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 /// Notifier làm cầu nối Listenable giữa Riverpod và GoRouter.
 /// Chỉ notify GoRouter khi trạng thái đăng nhập thực sự thay đổi (giữa đã login và chưa login),
 /// tránh việc khởi tạo lại GoRouter làm hủy hoại Navigator/Dialog/Modal.
@@ -69,6 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ref.read(routerNotifierProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.login,
     refreshListenable: notifier,
     redirect: (context, state) {
