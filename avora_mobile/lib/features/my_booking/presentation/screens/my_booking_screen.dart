@@ -14,9 +14,6 @@ import '../widgets/cancel_booking_modal.dart';
 import '../widgets/date_change_modal.dart';
 import '../widgets/edit_guest_modal.dart';
 
-/// Màn hình Quản lý đặt phòng và lịch sử lưu trú cá nhân
-/// Hỗ trợ cả người dùng thông thường và Vendor (đối tác quản lý chỗ nghỉ)
-/// Thiết kế đồng bộ chuẩn 1:1 từ phiên bản Web OTA Avora (MyBookingsPage.jsx)
 class MyBookingScreen extends ConsumerStatefulWidget {
   const MyBookingScreen({super.key});
 
@@ -25,145 +22,131 @@ class MyBookingScreen extends ConsumerStatefulWidget {
 }
 
 class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(myBookingNotifierProvider.notifier).loadBookings();
-    });
-  }
+  bool _showHistory = false;
 
-  // ─── Modal Handlers ────────────────────────────────────────────────────────
-
-  /// Mở Voucher điện tử (E-Ticket)
-  Future<void> _handleOpenVoucher(BookingItemModel booking) async {
+  Future<void> _openVoucher(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
-
-    // Hiển thị dialog loading tạm thời trong lúc nạp voucher
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF003580),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF003580)),
       ),
     );
 
     await notifier.loadVoucher(booking.bookingId);
-
     if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop(); // đóng loading dialog
 
+    Navigator.of(context, rootNavigator: true).pop();
     final state = ref.read(myBookingNotifierProvider);
     if (state.selectedVoucher != null) {
       await BookingVoucherSheet.show(context, state.selectedVoucher!);
     } else if (state.errorMessage != null) {
-      _showSnackBar(state.errorMessage!, isError: true);
+      _showMessage(state.errorMessage!, isError: true);
     }
   }
 
-  /// Mở modal sửa thông tin khách
-  Future<void> _handleOpenEditGuest(BookingItemModel booking) async {
+  Future<void> _editGuest(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
-
-    final success = await EditGuestModal.show(
+    final saved = await EditGuestModal.show(
       context,
       booking: booking,
-      onSave: ({
-        required String guestName,
-        required String guestPhone,
-        String? specialRequest,
-      }) {
-        return notifier.updateGuestInfo(
-          booking.bookingId,
-          guestName: guestName,
-          guestPhone: guestPhone,
-          specialRequest: specialRequest,
-        );
-      },
+      onSave:
+          ({
+            required String guestName,
+            required String guestPhone,
+            String? specialRequest,
+          }) => notifier.updateGuestInfo(
+            booking.bookingId,
+            guestName: guestName,
+            guestPhone: guestPhone,
+            specialRequest: specialRequest,
+          ),
     );
 
-    if (success == true && mounted) {
-      _showSnackBar('Cập nhật thông tin khách thành công!');
+    if (saved == true && mounted) {
+      _showMessage('Cập nhật thông tin khách thành công!');
     }
   }
 
-  /// Mở modal đổi ngày lưu trú
-  Future<void> _handleOpenDateChange(BookingItemModel booking) async {
+  Future<void> _changeDates(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
-
-    final success = await DateChangeModal.show(
+    final changed = await DateChangeModal.show(
       context,
       booking: booking,
-      onConfirmDateChange: ({
-        required String checkInDate,
-        required String checkOutDate,
-      }) {
-        return notifier.changeBookingDates(
-          booking.bookingId,
-          checkInDate: checkInDate,
-          checkOutDate: checkOutDate,
-        );
-      },
+      onConfirmDateChange:
+          ({required String checkInDate, required String checkOutDate}) =>
+              notifier.changeBookingDates(
+                booking.bookingId,
+                checkInDate: checkInDate,
+                checkOutDate: checkOutDate,
+              ),
     );
 
-    if (success == true && mounted) {
-      _showSnackBar('Đổi ngày lưu trú thành công!');
+    if (changed == true && mounted) {
+      _showMessage('Đổi ngày lưu trú thành công!');
     }
   }
 
-  /// Mở modal xác nhận hủy phòng
-  Future<void> _handleOpenCancel(BookingItemModel booking) async {
+  Future<void> _cancelBooking(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
-
-    final success = await CancelBookingModal.show(
+    final cancelled = await CancelBookingModal.show(
       context,
       booking: booking,
-      onConfirmCancel: ({required String reason}) {
-        return notifier.cancelBooking(
-          booking.bookingId,
-          reason: reason,
-        );
-      },
+      onConfirmCancel: ({required String reason}) =>
+          notifier.cancelBooking(booking.bookingId, reason: reason),
     );
 
-    if (success == true && mounted) {
-      _showSnackBar('Đã hủy đơn đặt phòng thành công!');
+    if (cancelled == true && mounted) {
+      _showMessage('Đã hủy đơn đặt phòng thành công!');
     }
   }
 
-  /// Đặt lại phòng tại khách sạn này
-  void _handleRebook(BookingItemModel booking) {
-    if (booking.hotel.hotelId.isNotEmpty) {
-      context.push(AppRoutes.hotelDetailPath(booking.hotel.hotelId));
-    } else {
-      context.push(AppRoutes.hotelSearch);
-    }
+  void _rebook(BookingItemModel booking) {
+    final hotelId = booking.hotel.hotelId;
+    context.push(
+      hotelId.isNotEmpty
+          ? AppRoutes.hotelDetailPath(hotelId)
+          : AppRoutes.hotelSearch,
+    );
   }
 
-  void _showSnackBar(String message, {bool isError = false}) {
+  void _changeGroup(bool showHistory) {
+    setState(() => _showHistory = showHistory);
+    final targetTab = showHistory ? 'all' : 'upcoming';
+    ref.read(myBookingNotifierProvider.notifier).changeTab(targetTab);
+  }
+
+  void _changeStatusFilter(String tab) {
+    if (tab == 'upcoming') {
+      setState(() => _showHistory = false);
+    } else if (tab == 'completed' || tab == 'cancelled') {
+      setState(() => _showHistory = true);
+    }
+    ref.read(myBookingNotifierProvider.notifier).changeTab(tab);
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFDC2626) : const Color(0xFF10B981),
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bookingState = ref.watch(myBookingNotifierProvider);
-    final bookingNotifier = ref.read(myBookingNotifierProvider.notifier);
-
-    // Xác định thông tin vai trò người dùng (Vendor / Khách hàng)
+    final state = ref.watch(myBookingNotifierProvider);
+    final notifier = ref.read(myBookingNotifierProvider.notifier);
     final authState = ref.watch(authNotifierProvider);
     final user = authState is AuthSuccess ? authState.user : null;
-    final userRole = (user?.role ?? '').toUpperCase();
-    final isVendor = userRole.contains('VEN') || userRole.contains('VENDOR');
+    final role = (user?.role ?? '').toUpperCase();
+    final isVendor = role.contains('VEN') || role.contains('VENDOR');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -171,7 +154,6 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
         backgroundColor: const Color(0xFF003580),
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           tooltip: 'Quay lại',
@@ -188,40 +170,13 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
           children: [
             const Text(
               'Quản lý Đặt Chỗ & Lịch Sử',
-              style: TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
             ),
-            Row(
-              children: [
-                if (isVendor) ...[
-                  Container(
-                    margin: const EdgeInsets.only(top: 2, right: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFC107),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: const Text(
-                      'VENDOR / ĐỐI TÁC',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-                const Text(
-                  'Trung tâm điều hành chuyến đi Avora',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFFBFDBFE),
-                  ),
-                ),
-              ],
+            Text(
+              isVendor
+                  ? 'VENDOR / ĐỐI TÁC'
+                  : 'Trung tâm điều hành chuyến đi Avora',
+              style: const TextStyle(fontSize: 11, color: Color(0xFFBFDBFE)),
             ),
           ],
         ),
@@ -229,32 +184,35 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded, size: 21),
             tooltip: 'Làm mới',
-            onPressed: () => bookingNotifier.loadBookings(),
+            onPressed: () => notifier.loadBookings(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // ─── 1. BỘ LỌC TABS & TÌM KIẾM ──────────────────────────────────
           BookingFilterBar(
-            activeTab: bookingState.activeTab,
-            onTabChange: (tab) => bookingNotifier.changeTab(tab),
-            counts: bookingState.counts,
-            searchQuery: bookingState.searchQuery,
-            onSearchSubmitted: (q) => bookingNotifier.setSearchQuery(q),
-            timeRange: bookingState.timeRange,
-            onTimeRangeChanged: (tr) => bookingNotifier.setTimeRange(tr),
-            availableYears: bookingState.availableYears,
-            requireVatOnly: bookingState.requireVatOnly,
-            onToggleVatOnly: () => bookingNotifier.toggleVatOnly(),
+            activeTab: state.activeTab,
+            onTabChange: _changeStatusFilter,
+            counts: state.counts,
+            searchQuery: state.searchQuery,
+            onSearchSubmitted: notifier.setSearchQuery,
+            timeRange: state.timeRange,
+            onTimeRangeChanged: notifier.setTimeRange,
+            availableYears: state.availableYears,
+            requireVatOnly: state.requireVatOnly,
+            onToggleVatOnly: notifier.toggleVatOnly,
           ),
-
-          // ─── 2. DANH SÁCH HOẶC TRẠNG THÁI RỖNG / LOADING ─────────────────
+          _BookingGroupSelector(
+            showHistory: _showHistory,
+            upcomingCount: state.counts.upcoming,
+            historyCount: state.counts.completed + state.counts.cancelled,
+            onChanged: _changeGroup,
+          ),
           Expanded(
             child: RefreshIndicator(
               color: const Color(0xFF003580),
-              onRefresh: () => bookingNotifier.loadBookings(silent: true),
-              child: _buildBodyContent(bookingState),
+              onRefresh: () => notifier.loadBookings(silent: true),
+              child: _buildBodyContent(state),
             ),
           ),
         ],
@@ -263,196 +221,118 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
   }
 
   Widget _buildBodyContent(MyBookingState state) {
-    if (state.isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Color(0xFF003580)),
-            SizedBox(height: 14),
-            Text(
-              'Đang tải danh sách đặt phòng...',
-              style: TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 13,
-              ),
+    if (state.isLoading && state.bookings.isEmpty) {
+      return ListView(
+        physics: AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xFF003580)),
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
     if (state.errorMessage != null && state.bookings.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: Color(0xFFDC2626),
-                size: 48,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                state.errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF0F172A),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: Color(0xFFDC2626),
+                      size: 48,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(state.errorMessage!, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ref
+                          .read(myBookingNotifierProvider.notifier)
+                          .loadBookings(),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Thử lại'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () =>
-                    ref.read(myBookingNotifierProvider.notifier).loadBookings(),
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Thử lại'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF003580),
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
-    final visibleBookings = state.visibleBookings;
+    final groupBookings = state.visibleBookings.where((booking) {
+      return _showHistory
+          ? booking.category == 'completed' || booking.category == 'cancelled'
+          : booking.category == 'upcoming';
+    }).toList();
 
-    // Không có kết quả nào
-    if (visibleBookings.isEmpty) {
-      return _buildEmptyState(state);
+    if (groupBookings.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: Text(
+                _showHistory
+                    ? 'Lịch sử đặt chỗ chưa khả dụng'
+                    : 'Đặt chỗ sắp tới sẽ ở đây',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 15),
+              ),
+            ),
+          ),
+          const BookingSupportBanner(),
+        ],
+      );
     }
 
-    // Hiển thị danh sách booking theo dạng các Section hoặc Danh sách phẳng
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        // ─── NẾU CHỌN TAB "TẤT CẢ ĐƠN" → PHÂN KHỐI THEO 3 SECTION CHUẨN WEB ───
-        if (state.activeTab == 'all') ...[
-          // Section Sắp tới
-          if (state.upcomingBookings.isNotEmpty) ...[
-            _buildSectionHeader(
-              title: 'Chuyến Đi Sắp Tới',
-              dotColor: const Color(0xFF10B981),
-              countBadge: '${state.upcomingBookings.length} đơn',
-            ),
-            ...state.upcomingBookings.map((b) => _buildBookingCard(b)),
-            const SizedBox(height: 10),
-          ],
-
-          // Section Đã hoàn thành
-          if (state.completedBookings.isNotEmpty) ...[
-            _buildSectionHeader(
-              title: 'Kỳ Nghỉ Đã Hoàn Thành',
-              dotColor: const Color(0xFF3B82F6),
-              countBadge: '${state.completedBookings.length} kỳ nghỉ',
-            ),
-            ...state.completedBookings.map((b) => _buildBookingCard(b)),
-            const SizedBox(height: 10),
-          ],
-
-          // Section Đã hủy
-          if (state.cancelledBookings.isNotEmpty) ...[
-            _buildSectionHeader(
-              title: 'Đơn Đặt Phòng Đã Hủy',
-              dotColor: const Color(0xFF94A3B8),
-              countBadge: '${state.cancelledBookings.length} đơn',
-            ),
-            ...state.cancelledBookings.map((b) => _buildBookingCard(b)),
-            const SizedBox(height: 10),
-          ],
-        ] else ...[
-          // ─── TAB CỤ THỂ (Sắp tới / Đã hoàn thành / Đã hủy) ──────────────
-          _buildSectionHeader(
-            title: state.activeTab == 'upcoming'
-                ? 'Chuyến Đi Sắp Tới Của Bạn'
-                : state.activeTab == 'completed'
-                    ? 'Kỳ Nghỉ Đã Hoàn Thành'
-                    : 'Đơn Đặt Phòng Đã Hủy',
-            dotColor: state.activeTab == 'upcoming'
-                ? const Color(0xFF10B981)
-                : state.activeTab == 'completed'
-                    ? const Color(0xFF3B82F6)
-                    : const Color(0xFF94A3B8),
-            countBadge: '${visibleBookings.length} đơn',
-          ),
-          ...visibleBookings.map((b) => _buildBookingCard(b)),
-        ],
-
-        // ─── BANNER HỖ TRỢ 24/7 ──────────────────────────────────────────
+        _buildSectionHeader(
+          title: _showHistory ? 'Lịch sử đặt chỗ' : 'Chuyến Đi Sắp Tới',
+          count: groupBookings.length,
+        ),
+        ...groupBookings.map(_buildBookingCard),
         const SizedBox(height: 12),
         const BookingSupportBanner(),
       ],
     );
   }
 
-  Widget _buildBookingCard(BookingItemModel booking) {
-    return BookingCard(
-      key: ValueKey(booking.bookingId),
-      booking: booking,
-      onOpenVoucher: () => _handleOpenVoucher(booking),
-      onOpenEditGuest: () => _handleOpenEditGuest(booking),
-      onOpenDateChange: () => _handleOpenDateChange(booking),
-      onOpenCancel: () => _handleOpenCancel(booking),
-      onRebook: () => _handleRebook(booking),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required Color dotColor,
-    required String countBadge,
-  }) {
+  Widget _buildSectionHeader({required String title, required int count}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, top: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
             ),
-            child: Text(
-              countBadge,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF475569),
-              ),
+          ),
+          Text(
+            '$count đơn',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF475569),
             ),
           ),
         ],
@@ -460,95 +340,108 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
     );
   }
 
-  /// Trạng thái rỗng (Empty State)
-  Widget _buildEmptyState(MyBookingState state) {
-    final hasSearchOrFilter = state.searchQuery.isNotEmpty ||
-        state.timeRange != 'all' ||
-        state.requireVatOnly;
+  Widget _buildBookingCard(BookingItemModel booking) {
+    return BookingCard(
+      key: ValueKey(booking.bookingId),
+      booking: booking,
+      onOpenDetails: () =>
+          context.push(AppRoutes.bookingDetailPath(booking.bookingId)),
+      onOpenVoucher: () => _openVoucher(booking),
+      onOpenEditGuest: booking.category == 'upcoming'
+          ? () => _editGuest(booking)
+          : null,
+      onOpenDateChange: booking.category == 'upcoming'
+          ? () => _changeDates(booking)
+          : null,
+      onOpenCancel: booking.category == 'upcoming'
+          ? () => _cancelBooking(booking)
+          : null,
+      onRebook: () => _rebook(booking),
+    );
+  }
+}
 
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: const Icon(
-                Icons.luggage_outlined,
-                color: Color(0xFF0284C7),
-                size: 46,
-              ),
+class _BookingGroupSelector extends StatelessWidget {
+  final bool showHistory;
+  final int upcomingCount;
+  final int historyCount;
+  final ValueChanged<bool> onChanged;
+
+  const _BookingGroupSelector({
+    required this.showHistory,
+    required this.upcomingCount,
+    required this.historyCount,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _BookingGroupButton(
+              label: 'Chuyến sắp tới',
+              count: upcomingCount,
+              isSelected: !showHistory,
+              onTap: () => onChanged(false),
             ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearchOrFilter
-                  ? 'Không tìm thấy đơn đặt phòng phù hợp'
-                  : 'Bạn chưa có lịch đặt phòng nào',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _BookingGroupButton(
+              label: 'Lịch sử',
+              count: historyCount,
+              isSelected: showHistory,
+              onTap: () => onChanged(true),
             ),
-            const SizedBox(height: 8),
-            Text(
-              hasSearchOrFilter
-                  ? 'Thử thay đổi từ khóa tìm kiếm hoặc đặt lại bộ lọc thời gian để hiển thị đầy đủ đơn.'
-                  : 'Hãy tìm một điểm dừng chân lý tưởng cho kỳ nghỉ sắp tới và đặt phòng cùng Avora ngay hôm nay.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 13.5,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (hasSearchOrFilter) ...[
-              OutlinedButton.icon(
-                onPressed: () {
-                  ref.read(myBookingNotifierProvider.notifier)
-                    ..setSearchQuery('')
-                    ..setTimeRange('all');
-                },
-                icon: const Icon(Icons.clear_all_rounded, size: 18),
-                label: const Text('Xóa bộ lọc tìm kiếm'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF003580),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  side: const BorderSide(color: Color(0xFF93C5FD)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ] else ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => context.push(AppRoutes.hotelSearch),
-                  icon: const Icon(Icons.search_rounded),
-                  label: const Text('Khám phá khách sạn ngay'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF003580),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingGroupButton extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _BookingGroupButton({
+    required this.label,
+    required this.count,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected
+        ? const Color(0xFF003580)
+        : const Color(0xFF64748B);
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        backgroundColor: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+        side: BorderSide(
+          color: isSelected ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
         ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label),
+          const SizedBox(width: 6),
+          Text(
+            '$count',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
