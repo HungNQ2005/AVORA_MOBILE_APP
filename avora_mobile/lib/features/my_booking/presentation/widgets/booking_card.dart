@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../data/models/booking_countdown_helper.dart';
 import '../../data/models/booking_item_model.dart';
 
 /// Card hiển thị thông tin chi tiết một đơn đặt phòng
@@ -111,10 +113,11 @@ class BookingCard extends StatelessWidget {
                   ),
                 ),
 
-                // Badge trạng thái
+                // Badge trạng thái kèm bộ đếm ngược
                 _StatusBadge(
                   statusName: booking.statusName,
                   variant: booking.statusBadgeVariant,
+                  createdAt: booking.createdAt,
                 ),
               ],
             ),
@@ -611,15 +614,62 @@ class BookingCard extends StatelessWidget {
   }
 }
 
-/// Widget hiển thị huy hiệu trạng thái đơn đặt phòng
-class _StatusBadge extends StatelessWidget {
+/// Widget hiển thị huy hiệu trạng thái đơn đặt phòng kèm bộ đếm ngược 10 phút (nếu đang chờ thanh toán)
+class _StatusBadge extends StatefulWidget {
   final String statusName;
   final String variant;
+  final String? createdAt;
 
   const _StatusBadge({
     required this.statusName,
     required this.variant,
+    this.createdAt,
   });
+
+  @override
+  State<_StatusBadge> createState() => _StatusBadgeState();
+}
+
+class _StatusBadgeState extends State<_StatusBadge> {
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+
+  bool get _isPending =>
+      widget.variant == 'amber' || widget.variant == 'pending';
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimerIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatusBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.createdAt != widget.createdAt ||
+        oldWidget.variant != widget.variant) {
+      _startTimerIfNeeded();
+    }
+  }
+
+  void _startTimerIfNeeded() {
+    _timer?.cancel();
+    _timer = null;
+    if (_isPending && widget.createdAt != null && widget.createdAt!.isNotEmpty) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() {
+          _now = DateTime.now();
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -627,47 +677,100 @@ class _StatusBadge extends StatelessWidget {
     Color fg;
     Color border;
 
-    switch (variant) {
-      case 'amber':
-      case 'pending':
-        bg = const Color(0xFFFFFBEB);
-        fg = const Color(0xFFB45309);
-        border = const Color(0xFFFDE68A);
-        break;
-      case 'cancelled':
-        bg = const Color(0xFFFEF2F2);
-        fg = const Color(0xFFDC2626);
-        border = const Color(0xFFFECACA);
-        break;
-      case 'success':
-      case 'completed':
-        bg = const Color(0xFFEFF6FF);
-        fg = const Color(0xFF1D4ED8);
-        border = const Color(0xFFBFDBFE);
-        break;
-      case 'confirmed':
-      default:
-        bg = const Color(0xFFECFDF5);
-        fg = const Color(0xFF047857);
-        border = const Color(0xFFA7F3D0);
-        break;
+    BookingCountdownResult? countdown;
+    if (_isPending && widget.createdAt != null && widget.createdAt!.isNotEmpty) {
+      countdown = BookingCountdownHelper.getCountdown(
+        createdAtStr: widget.createdAt,
+        currentTime: _now,
+      );
     }
 
+    final isExpired = countdown != null && countdown.expired;
+
+    if (isExpired) {
+      bg = const Color(0xFFFEF2F2);
+      fg = const Color(0xFFDC2626);
+      border = const Color(0xFFFECACA);
+    } else {
+      switch (widget.variant) {
+        case 'amber':
+        case 'pending':
+          bg = const Color(0xFFFFFBEB);
+          fg = const Color(0xFFB45309);
+          border = const Color(0xFFFDE68A);
+          break;
+        case 'cancelled':
+          bg = const Color(0xFFFEF2F2);
+          fg = const Color(0xFFDC2626);
+          border = const Color(0xFFFECACA);
+          break;
+        case 'success':
+        case 'completed':
+          bg = const Color(0xFFEFF6FF);
+          fg = const Color(0xFF1D4ED8);
+          border = const Color(0xFFBFDBFE);
+          break;
+        case 'confirmed':
+        default:
+          bg = const Color(0xFFECFDF5);
+          fg = const Color(0xFF047857);
+          border = const Color(0xFFA7F3D0);
+          break;
+      }
+    }
+
+    final iconData = isExpired
+        ? Icons.error_outline_rounded
+        : (_isPending
+            ? Icons.access_time_rounded
+            : (widget.variant == 'cancelled'
+                ? Icons.cancel_outlined
+                : Icons.check_circle_outline_rounded));
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: border),
       ),
-      child: Text(
-        statusName,
-        style: TextStyle(
-          color: fg,
-          fontSize: 11.5,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            iconData,
+            size: 13,
+            color: fg,
+          ),
+          const SizedBox(width: 4.5),
+          Text(
+            isExpired ? 'Hết hạn thanh toán' : widget.statusName,
+            style: TextStyle(
+              color: fg,
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (countdown != null && !countdown.expired) ...[
+            Container(
+              height: 12,
+              width: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              color: fg.withOpacity(0.35),
+            ),
+            Text(
+              countdown.label,
+              style: TextStyle(
+                color: fg,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 }
+
