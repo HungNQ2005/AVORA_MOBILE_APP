@@ -327,7 +327,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () => context.push(AppRoutes.favorites),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ProfileShortcutCard(
+            icon: Icons.confirmation_number_outlined,
+            label: 'Mã Khuyến Mãi',
+            onTap: () => context.push(AppRoutes.voucherWallet),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(
           child: ProfileShortcutCard(
             icon: Icons.luggage_outlined,
