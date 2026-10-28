@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
 import '../../data/models/booking_item_model.dart';
 
 /// Card hiển thị thông tin chi tiết một đơn đặt phòng
 /// Thiết kế đồng bộ chuẩn với các BookingCard trên Web OTA Avora
 class BookingCard extends StatelessWidget {
   final BookingItemModel booking;
+  final VoidCallback? onOpenDetails;
   final VoidCallback onOpenVoucher;
   final VoidCallback? onOpenEditGuest;
   final VoidCallback? onOpenDateChange;
@@ -17,6 +19,7 @@ class BookingCard extends StatelessWidget {
   const BookingCard({
     super.key,
     required this.booking,
+    this.onOpenDetails,
     required this.onOpenVoucher,
     this.onOpenEditGuest,
     this.onOpenDateChange,
@@ -62,9 +65,7 @@ class BookingCard extends StatelessWidget {
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFF1F5F9)),
-              ),
+              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -72,9 +73,7 @@ class BookingCard extends StatelessWidget {
                 // Mã booking kèm nút sao chép
                 InkWell(
                   onTap: () {
-                    Clipboard.setData(
-                      ClipboardData(text: booking.bookingCode),
-                    );
+                    Clipboard.setData(ClipboardData(text: booking.bookingCode));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -87,8 +86,10 @@ class BookingCard extends StatelessWidget {
                   },
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Row(
                       children: [
                         const Icon(
@@ -143,7 +144,8 @@ class BookingCard extends StatelessWidget {
                         width: 90,
                         height: 90,
                         color: const Color(0xFFF1F5F9),
-                        child: booking.hotel.thumbnailUrl != null &&
+                        child:
+                            booking.hotel.thumbnailUrl != null &&
                                 booking.hotel.thumbnailUrl!.isNotEmpty
                             ? Image.network(
                                 booking.hotel.thumbnailUrl!,
@@ -178,7 +180,9 @@ class BookingCard extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 1),
+                                    horizontal: 6,
+                                    vertical: 1,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFFEF3C7),
                                     borderRadius: BorderRadius.circular(4),
@@ -274,7 +278,9 @@ class BookingCard extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFE0F2FE),
                               borderRadius: BorderRadius.circular(6),
@@ -290,7 +296,8 @@ class BookingCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                        if (booking.stay.daysLeftText.isNotEmpty && isUpcoming) ...[
+                      if (booking.stay.daysLeftText.isNotEmpty &&
+                          isUpcoming) ...[
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -433,7 +440,9 @@ class BookingCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDCFCE7),
                                 borderRadius: BorderRadius.circular(4),
@@ -483,6 +492,28 @@ class BookingCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (onOpenDetails != null)
+                  OutlinedButton.icon(
+                    onPressed: onOpenDetails,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('Xem chi tiết'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF003580),
+                      side: const BorderSide(color: Color(0xFF93C5FD)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
                 // Nút xem Voucher điện tử
                 ElevatedButton.icon(
                   onPressed: onOpenVoucher,
@@ -493,7 +524,9 @@ class BookingCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -515,7 +548,9 @@ class BookingCard extends StatelessWidget {
                         foregroundColor: const Color(0xFF334155),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -534,7 +569,9 @@ class BookingCard extends StatelessWidget {
                         foregroundColor: const Color(0xFF334155),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -553,7 +590,9 @@ class BookingCard extends StatelessWidget {
                         foregroundColor: const Color(0xFFDC2626),
                         side: const BorderSide(color: Color(0xFFFCA5A5)),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -596,7 +635,9 @@ class BookingCard extends StatelessWidget {
                       foregroundColor: const Color(0xFF003580),
                       side: const BorderSide(color: Color(0xFF93C5FD)),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -618,11 +659,7 @@ class BookingCard extends StatelessWidget {
     return Container(
       color: const Color(0xFFE2E8F0),
       child: const Center(
-        child: Icon(
-          Icons.hotel_rounded,
-          color: Color(0xFF94A3B8),
-          size: 32,
-        ),
+        child: Icon(Icons.hotel_rounded, color: Color(0xFF94A3B8), size: 32),
       ),
     );
   }
@@ -643,10 +680,7 @@ class _StatusBadge extends StatelessWidget {
   final String statusName;
   final String variant;
 
-  const _StatusBadge({
-    required this.statusName,
-    required this.variant,
-  });
+  const _StatusBadge({required this.statusName, required this.variant});
 
   @override
   Widget build(BuildContext context) {

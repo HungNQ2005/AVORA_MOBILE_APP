@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/coupon_model.dart';
 import '../models/booking_result_model.dart';
+import '../models/booking_detail_model.dart';
 
 /// Provider cung cấp BookingRepository
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
@@ -133,6 +134,63 @@ class BookingRepository {
       throw Exception(serverMsg ?? e.message ?? 'Không thể tạo đơn đặt phòng.');
     } catch (e) {
       throw Exception('Lỗi đặt phòng: $e');
+    }
+  }
+
+  /// Gọi API `GET /api/bookings/:id` để lấy toàn bộ thông tin chi tiết của một đơn đặt phòng.
+  Future<BookingDetailModel> getBookingDetail(String bookingId) async {
+    try {
+      final response = await _dio.get('/bookings/$bookingId');
+      final data = response.data;
+      if (data != null && data['data'] is Map<String, dynamic>) {
+        return BookingDetailModel.fromJson(
+          Map<String, dynamic>.from(data['data'] as Map),
+        );
+      }
+
+      throw Exception('Dữ liệu chi tiết đặt phòng không đúng định dạng.');
+    } on DioException catch (e) {
+      final resData = e.response?.data;
+      final serverMsg = resData is Map ? resData['message']?.toString() : null;
+      if (e.response?.statusCode == 404) {
+        throw Exception(serverMsg ?? 'Không tìm thấy thông tin đơn đặt phòng.');
+      }
+      throw Exception(serverMsg ?? e.message ?? 'Không thể tải chi tiết đặt phòng.');
+    } catch (e) {
+      throw Exception('Lỗi kết nối máy chủ: $e');
+    }
+  }
+
+  /// Gọi API `GET /api/bookings/my` để lấy danh sách các đơn đặt phòng của người dùng hiện tại.
+  Future<List<BookingDetailModel>> getMyBookings({String status = 'all'}) async {
+    try {
+      final response = await _dio.get(
+        '/bookings/my',
+        queryParameters: {
+          if (status != 'all') 'status': status,
+        },
+      );
+
+      final data = response.data;
+      if (data != null && data['data'] is Map<String, dynamic>) {
+        final bookingsList = data['data']['bookings'];
+        if (bookingsList is List) {
+          return bookingsList
+              .whereType<Map>()
+              .map((item) => BookingDetailModel.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ))
+              .toList();
+        }
+      }
+
+      return [];
+    } on DioException catch (e) {
+      final resData = e.response?.data;
+      final serverMsg = resData is Map ? resData['message']?.toString() : null;
+      throw Exception(serverMsg ?? e.message ?? 'Không thể tải danh sách đơn đặt phòng.');
+    } catch (e) {
+      throw Exception('Lỗi kết nối máy chủ: $e');
     }
   }
 }
