@@ -9,6 +9,28 @@ final myBookingRepositoryProvider = Provider<MyBookingRepository>((ref) {
   return MyBookingRepository(dio);
 });
 
+/// Exception khi đổi ngày làm mất điều kiện áp dụng Voucher / Coupon
+class CouponRemovalRequiredException implements Exception {
+  final String message;
+  final String? couponCode;
+  final num currentTotal;
+  final num proposedTotal;
+  final num currentDiscount;
+  final String? reason;
+
+  const CouponRemovalRequiredException({
+    required this.message,
+    this.couponCode,
+    this.currentTotal = 0,
+    this.proposedTotal = 0,
+    this.currentDiscount = 0,
+    this.reason,
+  });
+
+  @override
+  String toString() => message;
+}
+
 /// Repository xử lý giao tiếp API cho Quản lý đặt phòng và lịch sử lưu trú
 class MyBookingRepository {
   final Dio _dio;
@@ -118,11 +140,13 @@ class MyBookingRepository {
     String bookingId, {
     required String checkInDate,
     required String checkOutDate,
+    bool confirmCouponRemoval = false,
   }) async {
     try {
       final payload = {
         'check_in_date': checkInDate.trim(),
         'check_out_date': checkOutDate.trim(),
+        'confirm_coupon_removal': confirmCouponRemoval,
       };
 
       await _dio.patch(
@@ -131,10 +155,27 @@ class MyBookingRepository {
       );
     } on DioException catch (e) {
       final resData = e.response?.data;
+      if (resData is Map &&
+          resData['code'] == 'COUPON_REMOVAL_CONFIRMATION_REQUIRED') {
+        final dataMap = resData['data'] is Map
+            ? Map<String, dynamic>.from(resData['data'] as Map)
+            : <String, dynamic>{};
+        throw CouponRemovalRequiredException(
+          message: resData['message']?.toString() ??
+              'Voucher hiện tại không còn đủ điều kiện áp dụng nếu đổi sang ngày này.',
+          couponCode: dataMap['coupon_code']?.toString(),
+          currentTotal: (dataMap['current_total'] as num?) ?? 0,
+          proposedTotal: (dataMap['proposed_total'] as num?) ?? 0,
+          currentDiscount: (dataMap['current_discount'] as num?) ?? 0,
+          reason: dataMap['reason']?.toString(),
+        );
+      }
       final serverMsg = resData is Map ? resData['message']?.toString() : null;
       throw Exception(
         serverMsg ?? e.message ?? 'Không thể thay đổi ngày lưu trú.',
       );
+    } on CouponRemovalRequiredException {
+      rethrow;
     } catch (e) {
       throw Exception('Lỗi đổi ngày: $e');
     }

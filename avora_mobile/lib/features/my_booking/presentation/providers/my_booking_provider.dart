@@ -258,6 +258,7 @@ class MyBookingNotifier extends StateNotifier<MyBookingState> {
     String bookingId, {
     required String checkInDate,
     required String checkOutDate,
+    bool confirmCouponRemoval = false,
   }) async {
     state = state.copyWith(
       isActionLoading: true,
@@ -270,6 +271,7 @@ class MyBookingNotifier extends StateNotifier<MyBookingState> {
         bookingId,
         checkInDate: checkInDate,
         checkOutDate: checkOutDate,
+        confirmCouponRemoval: confirmCouponRemoval,
       );
 
       state = state.copyWith(
@@ -279,6 +281,9 @@ class MyBookingNotifier extends StateNotifier<MyBookingState> {
 
       await loadBookings(silent: true);
       return true;
+    } on CouponRemovalRequiredException {
+      state = state.copyWith(isActionLoading: false);
+      rethrow;
     } catch (e) {
       state = state.copyWith(
         isActionLoading: false,

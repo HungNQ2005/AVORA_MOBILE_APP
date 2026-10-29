@@ -66,16 +66,29 @@ class _EditGuestModalState extends State<EditGuestModal> {
     super.dispose();
   }
 
-  /// Chuẩn hóa số điện thoại: bỏ khoảng trắng, dấu gạch ngang, tiền tố +84 / 84
+  /// Chuẩn hóa số điện thoại đồng bộ với normalizeGuestPhone của backend:
+  /// - Nếu số quốc tế bắt đầu bằng '+' (không phải +84): giữ '+' và các chữ số
+  /// - Nếu là số Việt Nam (bắt đầu bằng 84, 0084, hoặc số nội địa): chuẩn hóa thành 0xxxxxxxxx
   String _normalizePhone(String raw) {
-    var digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('84') && digits.length > 9) {
-      digits = digits.substring(2);
+    final trimmed = raw.trim();
+    if (trimmed.startsWith('+') && !trimmed.startsWith('+84')) {
+      final cleanIntl =
+          '+${trimmed.substring(1).replaceAll(RegExp(r'\D'), '')}';
+      return cleanIntl;
     }
-    if (digits.startsWith('0')) {
-      return digits;
-    }
-    return digits.isNotEmpty ? '0$digits' : digits;
+    var digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('00')) digits = digits.substring(2);
+    if (digits.startsWith('84')) digits = digits.substring(2);
+    digits = digits.replaceFirst(RegExp(r'^0+'), '');
+    return digits.isNotEmpty ? '0$digits' : '';
+  }
+
+  bool _isValidPhone(String raw) {
+    final trimmed = raw.trim();
+    if (!RegExp(r'^\+?[\d\s\-().]+$').hasMatch(trimmed)) return false;
+    final normalized = _normalizePhone(trimmed);
+    return RegExp(r'^0\d{9,10}$').hasMatch(normalized) ||
+        RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(normalized);
   }
 
   Future<void> _handleSubmit() async {
@@ -143,7 +156,7 @@ class _EditGuestModalState extends State<EditGuestModal> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Cập nhật thông tin khách',
+                      'Cập nhật thông tin nhận phòng',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -197,23 +210,33 @@ class _EditGuestModalState extends State<EditGuestModal> {
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
+                  maxLength: 100,
                   decoration: const InputDecoration(
                     hintText: 'VD: Nguyễn Văn A',
                     prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
+                    counterText: '',
                   ),
                   validator: (value) {
                     final trimmed = (value ?? '').trim();
                     if (trimmed.isEmpty) {
-                      return 'Vui lòng nhập họ và tên khách đại diện.';
+                      return 'Họ và tên người nhận phòng không được để trống.';
                     }
-                    if (trimmed.length < 2) {
-                      return 'Họ và tên phải có ít nhất 2 ký tự.';
+                    if (trimmed.length > 100) {
+                      return 'Họ và tên người nhận phòng tối đa 100 ký tự.';
                     }
-                    if (trimmed.length > 80) {
-                      return 'Họ và tên không được vượt quá 80 ký tự.';
+                    // Đồng bộ với GUEST_NAME_REGEX của backend và Web:
+                    // Chỉ cho phép chữ cái (hỗ trợ có dấu), khoảng trắng, dấu nháy đơn, gạch nối hoặc dấu chấm.
+                    final guestNameRegex = RegExp(
+                      r"^\p{L}[\p{L}\p{M}]*(?:(?:\p{Zs}+|['\u2019.-])\p{L}[\p{L}\p{M}]*)*$",
+                      unicode: true,
+                    );
+                    if (!guestNameRegex.hasMatch(trimmed)) {
+                      return 'Họ và tên chỉ dùng chữ cái, khoảng trắng, dấu nháy đơn, gạch nối hoặc dấu chấm.';
                     }
-                    if (RegExp(r'[0-9]').hasMatch(trimmed)) {
-                      return 'Họ và tên không được chứa chữ số.';
+                    final letterMatches =
+                        RegExp(r'\p{L}', unicode: true).allMatches(trimmed);
+                    if (letterMatches.length < 2) {
+                      return 'Họ và tên người nhận phòng phải có ít nhất 2 chữ cái.';
                     }
                     return null;
                   },
@@ -234,19 +257,16 @@ class _EditGuestModalState extends State<EditGuestModal> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    hintText: 'VD: 0912345678',
+                    hintText: 'VD: 0912345678 hoặc +84912345678',
                     prefixIcon: Icon(Icons.phone_outlined, size: 20),
                   ),
                   validator: (value) {
                     final raw = (value ?? '').trim();
                     if (raw.isEmpty) {
-                      return 'Vui lòng nhập số điện thoại liên hệ.';
+                      return 'Số điện thoại liên hệ không được để trống.';
                     }
-                    final normalized = _normalizePhone(raw);
-                    // Quy chuẩn số điện thoại Việt Nam: 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09
-                    final vnPhoneRegex = RegExp(r'^(03|05|07|08|09)\d{8}$');
-                    if (!vnPhoneRegex.hasMatch(normalized)) {
-                      return 'Số điện thoại không hợp lệ (cần 10 số, bắt đầu 03, 05, 07, 08, 09).';
+                    if (!_isValidPhone(raw)) {
+                      return 'Số điện thoại không hợp lệ (hỗ trợ số VN 10-11 số hoặc số quốc tế chuẩn +... từ 8-15 số).';
                     }
                     return null;
                   },
@@ -266,9 +286,9 @@ class _EditGuestModalState extends State<EditGuestModal> {
                 TextFormField(
                   controller: _requestController,
                   maxLines: 3,
-                  maxLength: 300,
+                  maxLength: 1000,
                   decoration: const InputDecoration(
-                    hintText: 'VD: Phòng tầng cao, 1 giường lớn, nhận phòng trễ...',
+                    hintText: 'Ví dụ: Giường đôi, tầng cao, nhận phòng muộn sau 18:00...',
                     alignLabelWithHint: true,
                   ),
                 ),

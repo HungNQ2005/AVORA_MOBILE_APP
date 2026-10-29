@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/booking_item_model.dart';
+import '../../data/repositories/my_booking_repository.dart';
 
 /// Modal đổi ngày lưu trú cho đơn đặt phòng
 class DateChangeModal extends StatefulWidget {
@@ -8,6 +9,7 @@ class DateChangeModal extends StatefulWidget {
   final Future<bool> Function({
     required String checkInDate,
     required String checkOutDate,
+    bool confirmCouponRemoval,
   }) onConfirmDateChange;
 
   const DateChangeModal({
@@ -22,6 +24,7 @@ class DateChangeModal extends StatefulWidget {
     required Future<bool> Function({
       required String checkInDate,
       required String checkOutDate,
+      bool confirmCouponRemoval,
     }) onConfirmDateChange,
   }) {
     return showModalBottomSheet<bool>(
@@ -44,6 +47,7 @@ class _DateChangeModalState extends State<DateChangeModal> {
   late DateTime _checkOut;
   bool _isSubmitting = false;
   String? _errorMessage;
+  CouponRemovalRequiredException? _couponNotice;
 
   @override
   void initState() {
@@ -87,6 +91,8 @@ class _DateChangeModalState extends State<DateChangeModal> {
     if (picked != null) {
       setState(() {
         _checkIn = picked;
+        _couponNotice = null;
+        _errorMessage = null;
         if (!_checkOut.isAfter(_checkIn)) {
           _checkOut = _checkIn.add(const Duration(days: 1));
         }
@@ -111,14 +117,37 @@ class _DateChangeModalState extends State<DateChangeModal> {
     if (picked != null) {
       setState(() {
         _checkOut = picked;
+        _couponNotice = null;
+        _errorMessage = null;
       });
     }
   }
 
-  Future<void> _handleConfirm() async {
+  Future<void> _handleConfirm({bool confirmCouponRemoval = false}) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (_checkIn.isBefore(today)) {
+      setState(() {
+        _errorMessage = 'Không được chọn ngày nhận phòng ở quá khứ.';
+      });
+      return;
+    }
     if (!_checkOut.isAfter(_checkIn)) {
       setState(() {
         _errorMessage = 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 đêm.';
+      });
+      return;
+    }
+    if (_nights > 30) {
+      setState(() {
+        _errorMessage =
+            'Thời gian lưu trú tối đa cho mỗi đơn đặt phòng trực tuyến là 30 đêm. Vui lòng liên hệ để đặt phòng dài hạn.';
+      });
+      return;
+    }
+    if (_checkIn.difference(today).inDays > 365) {
+      setState(() {
+        _errorMessage = 'Chỉ hỗ trợ đặt phòng trước tối đa 365 ngày.';
       });
       return;
     }
@@ -129,20 +158,35 @@ class _DateChangeModalState extends State<DateChangeModal> {
     });
 
     final format = DateFormat('yyyy-MM-dd');
-    final success = await widget.onConfirmDateChange(
-      checkInDate: format.format(_checkIn),
-      checkOutDate: format.format(_checkOut),
-    );
+    try {
+      final success = await widget.onConfirmDateChange(
+        checkInDate: format.format(_checkIn),
+        checkOutDate: format.format(_checkOut),
+        confirmCouponRemoval: confirmCouponRemoval,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (success) {
-      Navigator.of(context).pop(true);
-    } else {
+      if (success) {
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() {
+          _isSubmitting = false;
+          _errorMessage =
+              'Không thể đổi ngày lưu trú. Có thể phòng đã hết trong khoảng ngày bạn chọn.';
+        });
+      }
+    } on CouponRemovalRequiredException catch (e) {
+      if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _errorMessage =
-            'Không thể đổi ngày lưu trú. Có thể phòng đã hết trong khoảng ngày bạn chọn.';
+        _couponNotice = e;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -150,6 +194,7 @@ class _DateChangeModalState extends State<DateChangeModal> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final currencyFormat = NumberFormat('#,###', 'vi_VN');
 
     return Padding(
       padding: EdgeInsets.only(
@@ -220,6 +265,77 @@ class _DateChangeModalState extends State<DateChangeModal> {
                       color: Color(0xFFDC2626),
                       fontSize: 12.5,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Cảnh báo gỡ Coupon nếu vi phạm điều kiện sau đổi ngày (Đồng bộ với Web DateChangeModal)
+              if (_couponNotice != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 18,
+                            color: Color(0xFFD97706),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Voucher sẽ bị mất nếu bạn đổi ngày',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _couponNotice!.couponCode != null &&
+                                _couponNotice!.couponCode!.isNotEmpty
+                            ? 'Voucher ${_couponNotice!.couponCode} không còn đủ điều kiện áp dụng cho khoảng ngày này. Khoản giảm giá hiện tại ${currencyFormat.format(_couponNotice!.currentDiscount)} ₫ sẽ bị gỡ.'
+                            : 'Voucher hiện tại không còn đủ điều kiện áp dụng. Khoản giảm giá ${currencyFormat.format(_couponNotice!.currentDiscount)} ₫ sẽ bị gỡ.',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF78350F),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Tổng tiền sau khi đổi ngày và bỏ voucher: ${currencyFormat.format(_couponNotice!.proposedTotal)} ₫',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF92400E),
+                        ),
+                      ),
+                      if (_couponNotice!.reason != null &&
+                          _couponNotice!.reason!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _couponNotice!.reason!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFFB45309),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -302,49 +418,102 @@ class _DateChangeModalState extends State<DateChangeModal> {
               const SizedBox(height: 20),
 
               // Nút bấm
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+              if (_couponNotice != null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
+                        child: const Text('Không đổi ngày'),
                       ),
-                      child: const Text('Hủy bỏ'),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: _isSubmitting ? null : _handleConfirm,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF003580),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => _handleConfirm(confirmCouponRemoval: true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFD97706),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Bỏ voucher & đổi ngày',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            )
-                          : const Text('Xác nhận đổi ngày'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Hủy bỏ'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        onPressed: _isSubmitting ? null : () => _handleConfirm(),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF003580),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Xác nhận đổi ngày'),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

@@ -65,7 +65,7 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
     );
 
     if (saved == true && mounted) {
-      _showMessage('Cập nhật thông tin khách thành công!');
+      _showMessage('Cập nhật thông tin nhận phòng thành công!');
     }
   }
 
@@ -75,11 +75,16 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
       context,
       booking: booking,
       onConfirmDateChange:
-          ({required String checkInDate, required String checkOutDate}) =>
+          ({
+            required String checkInDate,
+            required String checkOutDate,
+            bool confirmCouponRemoval = false,
+          }) =>
               notifier.changeBookingDates(
                 booking.bookingId,
                 checkInDate: checkInDate,
                 checkOutDate: checkOutDate,
+                confirmCouponRemoval: confirmCouponRemoval,
               ),
     );
 

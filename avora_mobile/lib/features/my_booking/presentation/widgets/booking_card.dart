@@ -144,7 +144,7 @@ class BookingCard extends StatelessWidget {
                             ? Image.network(
                                 booking.hotel.thumbnailUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     _buildImageFallback(),
                               )
                             : _buildImageFallback(),
@@ -533,48 +533,51 @@ class BookingCard extends StatelessWidget {
 
                 // Hành động cho đơn Sắp tới (Upcoming)
                 if (isUpcoming) ...[
-                  if (onOpenEditGuest != null)
-                    OutlinedButton.icon(
-                      onPressed: onOpenEditGuest,
-                      icon: const Icon(Icons.edit_note_rounded, size: 16),
-                      label: const Text('Sửa khách'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF334155),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  if (onOpenDateChange != null)
-                    OutlinedButton.icon(
-                      onPressed: onOpenDateChange,
-                      icon: const Icon(Icons.edit_calendar_rounded, size: 16),
-                      label: const Text('Đổi ngày'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF334155),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                  // Chỉ cho phép chỉnh sửa nếu booking chưa thanh toán và ở trạng thái PND (đồng bộ can_edit với Web)
+                  if (booking.canEdit) ...[
+                    if (onOpenEditGuest != null)
+                      OutlinedButton.icon(
+                        onPressed: onOpenEditGuest,
+                        icon: const Icon(Icons.edit_note_rounded, size: 16),
+                        label: const Text('Thông tin nhận phòng'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF334155),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
+                    if (onOpenDateChange != null)
+                      OutlinedButton.icon(
+                        onPressed: onOpenDateChange,
+                        icon: const Icon(Icons.edit_calendar_rounded, size: 16),
+                        label: const Text('Đổi ngày'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF334155),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
                   if (onOpenCancel != null)
                     OutlinedButton.icon(
                       onPressed: onOpenCancel,
