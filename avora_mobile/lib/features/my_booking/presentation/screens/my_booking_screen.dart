@@ -5,6 +5,7 @@ import 'package:avora_mobile/core/router/app_router.dart';
 import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 
 import '../../data/models/booking_item_model.dart';
+import '../../data/repositories/my_booking_repository.dart';
 import '../providers/my_booking_provider.dart';
 import '../widgets/booking_card.dart';
 import '../widgets/booking_filter_bar.dart';
@@ -13,6 +14,7 @@ import '../widgets/booking_voucher_sheet.dart';
 import '../widgets/cancel_booking_modal.dart';
 import '../widgets/date_change_modal.dart';
 import '../widgets/edit_guest_modal.dart';
+import '../widgets/review_widget_modal.dart';
 
 class MyBookingScreen extends ConsumerStatefulWidget {
   const MyBookingScreen({super.key});
@@ -107,7 +109,16 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
     }
   }
 
-  void _rebook(BookingItemModel booking) {
+  Future<void> _handleOpenReview(BookingItemModel booking) async {
+    await ReviewWidgetModal.show(
+      context,
+      booking: booking,
+      repository: ref.read(myBookingRepositoryProvider),
+    );
+  }
+
+  /// Đặt lại phòng tại khách sạn này
+  void _handleRebook(BookingItemModel booking) {
     final hotelId = booking.hotel.hotelId;
     context.push(
       hotelId.isNotEmpty
@@ -307,33 +318,106 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        _buildSectionHeader(
-          title: _showHistory ? 'Lịch sử đặt chỗ' : 'Chuyến Đi Sắp Tới',
-          count: groupBookings.length,
-        ),
-        ...groupBookings.map(_buildBookingCard),
+        // ─── NẾU CHỌN TAB "TẤT CẢ ĐƠN" → PHÂN KHỐI THEO 3 SECTION CHUẨN WEB ───
+        if (state.activeTab == 'all' && !_showHistory) ...[
+          // Section Sắp tới
+          if (state.upcomingBookings.isNotEmpty) ...[
+            _buildSectionHeader(
+              title: 'Chuyến Đi Sắp Tới',
+              dotColor: const Color(0xFF10B981),
+              countBadge: '${state.upcomingBookings.length} đơn',
+            ),
+            ...state.upcomingBookings.map((b) => _buildBookingCard(b)),
+            const SizedBox(height: 10),
+          ],
+
+          // Section Đã hoàn thành
+          if (state.completedBookings.isNotEmpty) ...[
+            _buildSectionHeader(
+              title: 'Kỳ Nghỉ Đã Hoàn Thành',
+              dotColor: const Color(0xFF3B82F6),
+              countBadge: '${state.completedBookings.length} kỳ nghỉ',
+            ),
+            ...state.completedBookings.map((b) => _buildBookingCard(b)),
+            const SizedBox(height: 10),
+          ],
+
+          // Section Đã hủy
+          if (state.cancelledBookings.isNotEmpty) ...[
+            _buildSectionHeader(
+              title: 'Đơn Đặt Phòng Đã Hủy',
+              dotColor: const Color(0xFF94A3B8),
+              countBadge: '${state.cancelledBookings.length} đơn',
+            ),
+            ...state.cancelledBookings.map((b) => _buildBookingCard(b)),
+            const SizedBox(height: 10),
+          ],
+        ] else ...[
+          // ─── TAB CỤ THỂ (Sắp tới / Đã hoàn thành / Đã hủy) ──────────────
+          _buildSectionHeader(
+            title: _showHistory
+                ? 'Lịch sử đặt chỗ'
+                : state.activeTab == 'upcoming'
+                ? 'Chuyến Đi Sắp Tới Của Bạn'
+                : state.activeTab == 'completed'
+                ? 'Kỳ Nghỉ Đã Hoàn Thành'
+                : 'Đơn Đặt Phòng Đã Hủy',
+            dotColor: _showHistory
+                ? const Color(0xFF64748B)
+                : state.activeTab == 'upcoming'
+                ? const Color(0xFF10B981)
+                : state.activeTab == 'completed'
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF94A3B8),
+            countBadge: '${groupBookings.length} đơn',
+          ),
+          ...groupBookings.map((b) => _buildBookingCard(b)),
+        ],
+
+        // ─── BANNER HỖ TRỢ 24/7 ──────────────────────────────────────────
         const SizedBox(height: 12),
         const BookingSupportBanner(),
       ],
     );
   }
 
-  Widget _buildSectionHeader({required String title, required int count}) {
+  Widget _buildSectionHeader({
+    required String title,
+    int? count,
+    Color? dotColor,
+    String? countBadge,
+  }) {
+    final displayedCount = countBadge ?? '${count ?? 0} đơn';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, top: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-            ),
+          Row(
+            children: [
+              if (dotColor != null) ...[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
           ),
           Text(
-            '$count đơn',
+            displayedCount,
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -352,16 +436,11 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
       onOpenDetails: () =>
           context.push(AppRoutes.bookingDetailPath(booking.bookingId)),
       onOpenVoucher: () => _openVoucher(booking),
-      onOpenEditGuest: booking.category == 'upcoming'
-          ? () => _editGuest(booking)
-          : null,
-      onOpenDateChange: booking.category == 'upcoming'
-          ? () => _changeDates(booking)
-          : null,
-      onOpenCancel: booking.category == 'upcoming'
-          ? () => _cancelBooking(booking)
-          : null,
-      onRebook: () => _rebook(booking),
+      onOpenEditGuest: () => _editGuest(booking),
+      onOpenDateChange: () => _changeDates(booking),
+      onOpenCancel: () => _cancelBooking(booking),
+      onRebook: () => _handleRebook(booking),
+      onOpenReview: () => _handleOpenReview(booking),
     );
   }
 }
