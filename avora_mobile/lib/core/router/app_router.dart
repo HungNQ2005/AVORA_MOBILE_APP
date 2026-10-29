@@ -13,6 +13,8 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/booking/presentation/screens/booking_guest_info_screen.dart';
 import '../../features/booking/presentation/screens/booking_detail_screen.dart';
 import '../../features/booking/data/models/booking_guest_info_args.dart';
+import 'package:avora_mobile/features/travel_journal/presentation/screens/travel_journal_screen.dart';
+import 'package:avora_mobile/features/travel_essentials/presentation/screens/travel_essentials_screen.dart';
 
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
@@ -30,6 +32,8 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String hotelSearch = '/hotels';
   static const String bookingGuestInfo = '/booking/guest-info';
+  static const String travelJournal = '/travel-journal';
+  static const String travelEssentials = '/travel-essentials';
 }
 
 /// Navigator key gốc, dùng để mở popup (vd: AI Chat) từ bất kỳ màn hình nào.
@@ -153,6 +157,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id'] ?? '';
           return BookingDetailScreen(bookingId: id);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.travelJournal,
+        name: 'travel_journal',
+        builder: (context, state) => const TravelJournalScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.travelEssentials,
+        name: 'travel_essentials',
+        builder: (context, state) => const TravelEssentialsScreen(),
       ),
     ],
   );

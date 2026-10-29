@@ -318,22 +318,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildShortcuts() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: ProfileShortcutCard(
-            icon: Icons.favorite_border,
-            label: 'Yêu thích',
-            onTap: () => context.push(AppRoutes.favorites),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.favorite_border,
+                label: 'Yêu thích',
+                onTap: () => context.push(AppRoutes.favorites),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.luggage_outlined,
+                label: 'Đặt chỗ',
+                onTap: () => context.push(AppRoutes.myBooking),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ProfileShortcutCard(
-            icon: Icons.luggage_outlined,
-            label: 'Đặt chỗ',
-            onTap: () => context.push(AppRoutes.myBooking),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.auto_stories_outlined,
+                label: 'Nhật ký',
+                onTap: () => context.push(AppRoutes.travelJournal),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.travel_explore_outlined,
+                label: 'Tiện ích',
+                onTap: () => context.push(AppRoutes.travelEssentials),
+              ),
+            ),
+          ],
         ),
       ],
     );
