@@ -15,9 +15,10 @@ class HotelCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imageSrc = hotel.thumbnail ??
-        (hotel.images.isNotEmpty ? hotel.images.first : null) ??
-        'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
+    final imageSrc = [hotel.thumbnail, ...hotel.images]
+      .whereType<String>()
+      .map((image) => image.trim())
+      .firstWhere((image) => image.isNotEmpty, orElse: () => '');
 
     final oldPrice = (hotel.price * 1.18).round();
 
@@ -47,21 +48,15 @@ class HotelCard extends ConsumerWidget {
                 ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(14)),
-                  child: Image.network(
-                    imageSrc,
-                    height: 126,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      height: 126,
-                      color: const Color(0xFFE2E8F0),
-                      child: const Icon(
-                        Icons.apartment_rounded,
-                        color: Color(0xFF003580),
-                        size: 36,
-                      ),
-                    ),
-                  ),
+                  child: imageSrc.isEmpty
+                      ? _buildImageFallback()
+                      : Image.network(
+                          imageSrc,
+                          height: 126,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _buildImageFallback(),
+                        ),
                 ),
                 Positioned(
                   top: 8,
@@ -277,6 +272,20 @@ class HotelCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageFallback() {
+    return Container(
+      height: 126,
+      width: double.infinity,
+      color: const Color(0xFFE2E8F0),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.apartment_rounded,
+        color: Color(0xFF003580),
+        size: 36,
       ),
     );
   }

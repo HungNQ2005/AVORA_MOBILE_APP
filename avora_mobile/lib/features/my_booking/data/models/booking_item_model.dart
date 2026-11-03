@@ -343,6 +343,7 @@ class BookingItemModel extends Equatable {
   final BookingStayModel stay;
   final BookingCancellationModel cancellation;
   final BookingPaymentModel payment;
+  final bool canEdit;
   final BookingRefundModel? refund;
   final BookingCouponModel? coupon;
 
@@ -367,6 +368,7 @@ class BookingItemModel extends Equatable {
     required this.stay,
     required this.cancellation,
     required this.payment,
+    this.canEdit = false,
     this.refund,
     this.coupon,
   });
@@ -402,6 +404,7 @@ class BookingItemModel extends Equatable {
       payment: BookingPaymentModel.fromJson(
         Map<String, dynamic>.from((json['payment'] as Map?) ?? {}),
       ),
+      canEdit: json['can_edit'] == true,
       refund: json['refund'] != null
           ? BookingRefundModel.fromJson(
               Map<String, dynamic>.from(json['refund'] as Map),
@@ -437,6 +440,7 @@ class BookingItemModel extends Equatable {
         stay,
         cancellation,
         payment,
+        canEdit,
         refund,
         coupon,
       ];

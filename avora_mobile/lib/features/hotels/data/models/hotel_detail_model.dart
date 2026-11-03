@@ -204,8 +204,11 @@ class ReviewModel extends Equatable {
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
       reviewId: (json['review_id'] ?? json['id'] ?? '').toString(),
-      guestName: json['guest_name']?.toString() ?? 'Khách hàng Avora',
-      score: (json['score'] as num?)?.toDouble() ?? 9.0,
+      guestName:
+        (json['reviewer_name'] ?? json['guest_name'])?.toString() ??
+        'Khách hàng Avora',
+      score: ((json['rating_score'] ?? json['score']) as num?)?.toDouble() ??
+        9.0,
       comment: json['comment']?.toString() ?? '',
       createdAt: json['created_at']?.toString(),
     );

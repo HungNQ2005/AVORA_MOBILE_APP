@@ -80,17 +80,9 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ],
           ),
           const SizedBox(height: 2),
-          Text(
-            'Xin chào, $userName',
-            style: const TextStyle(
-              color: Color(0xFFE2E8F0),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           InkWell(
             key: const Key('open_profile_button'),
-            onTap: () => context.push('/profile'),
+            onTap: () => context.push(AppRoutes.profile),
             borderRadius: BorderRadius.circular(4),
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -155,8 +147,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
           },
         ),
         IconButton(
-
-          icon: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
+          icon: const Icon(Icons.menu_book_outlined, color: Colors.white, size: 22),
           key: const Key('my_booking_button'),
           tooltip: 'Đặt chỗ của tôi',
           onPressed: () => context.push('/my-bookings'),
