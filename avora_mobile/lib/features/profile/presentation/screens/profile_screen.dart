@@ -6,6 +6,7 @@ import 'package:avora_mobile/core/router/app_router.dart';
 import 'package:avora_mobile/features/auth/data/auth_model.dart';
 import 'package:avora_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:avora_mobile/features/profile/data/profile_repository.dart';
+
 import '../widgets/profile_header.dart';
 import '../widgets/profile_info_section.dart';
 import '../widgets/profile_security_section.dart';
@@ -244,10 +245,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (_loadError != null) return _buildLoadError();
 
     return TabBarView(
-      children: [
-        _buildProfileTab(_profile!),
-        _buildSecurityTab(_profile!),
-      ],
+      children: [_buildProfileTab(_profile!), _buildSecurityTab(_profile!)],
     );
   }
 
@@ -339,24 +337,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ProfileShortcutCard(
-            icon: Icons.confirmation_number_outlined,
-            label: 'Mã Khuyến Mãi',
-            onTap: () => context.push(AppRoutes.voucherWallet),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ProfileShortcutCard(
-            icon: Icons.luggage_outlined,
-            label: 'Đặt chỗ',
-            onTap: () => context.push(AppRoutes.myBooking),
-          ),
         const SizedBox(height: 12),
         Row(
           children: [
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.confirmation_number_outlined,
+                label: 'Mã Khuyến Mãi',
+                onTap: () => context.push(AppRoutes.voucherWallet),
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: ProfileShortcutCard(
                 icon: Icons.auto_stories_outlined,
@@ -364,7 +355,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.push(AppRoutes.travelJournal),
               ),
             ),
-            const SizedBox(width: 12),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
             Expanded(
               child: ProfileShortcutCard(
                 icon: Icons.travel_explore_outlined,
@@ -372,8 +367,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.push(AppRoutes.travelEssentials),
               ),
             ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox.shrink()),
           ],
-
         ),
       ],
     );

@@ -15,7 +15,7 @@ class VoucherRepository {
 
   VoucherRepository(this._dio);
 
-  /// Lấy danh sách Voucher từ API `GET /api/coupons`
+  /// Lấy danh sách Voucher từ API `GET /api/customer/coupons`
   Future<List<CouponModel>> getCustomerVouchers({
     String? search,
     String? discountType,
@@ -30,7 +30,7 @@ class VoucherRepository {
       }
 
       final response = await _dio.get(
-        '/coupons',
+        '/customer/coupons',
         queryParameters: queryParams,
       );
 
@@ -46,7 +46,9 @@ class VoucherRepository {
 
         return rawList
             .whereType<Map>()
-            .map((item) => CouponModel.fromJson(Map<String, dynamic>.from(item)))
+            .map(
+              (item) => CouponModel.fromJson(Map<String, dynamic>.from(item)),
+            )
             .toList();
       }
 
