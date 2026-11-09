@@ -92,7 +92,7 @@ class BookingDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // 5. Thẻ chi tiết thanh toán & chi phí (Pricing & Payment Breakdown)
-                _buildPaymentBreakdownCard(booking),
+                _buildPaymentBreakdownCard(context, booking),
                 const SizedBox(height: 16),
 
                 // 6. Thẻ chính sách & Hướng dẫn nhận phòng (Cancellation & Notice)
@@ -614,7 +614,8 @@ class BookingDetailScreen extends ConsumerWidget {
   }
 
   // ─── 5. Thẻ chi tiết thanh toán & Chi phí ─────────────────────────────────
-  Widget _buildPaymentBreakdownCard(BookingDetailModel booking) {
+  Widget _buildPaymentBreakdownCard(
+      BuildContext context, BookingDetailModel booking) {
     final currency = NumberFormat('#,###', 'vi_VN');
 
     return Container(
@@ -765,6 +766,31 @@ class BookingDetailScreen extends ConsumerWidget {
               ],
             ),
           ),
+          if (booking.isPaid) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push(
+                  AppRoutes.invoiceDetailPath(booking.bookingId),
+                ),
+                icon: const Icon(Icons.receipt_long_rounded, size: 17),
+                label: const Text('Xem hóa đơn điện tử & Giao dịch'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF047857),
+                  side: const BorderSide(color: Color(0xFF6EE7B7)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

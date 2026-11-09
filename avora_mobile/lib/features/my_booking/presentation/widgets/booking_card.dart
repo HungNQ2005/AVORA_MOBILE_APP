@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/router/app_router.dart';
 
 import '../../data/models/booking_item_model.dart';
 
@@ -15,6 +17,7 @@ class BookingCard extends StatelessWidget {
   final VoidCallback? onOpenCancel;
   final VoidCallback? onRebook;
   final VoidCallback? onOpenReview;
+  final VoidCallback? onOpenInvoice;
 
   const BookingCard({
     super.key,
@@ -26,6 +29,7 @@ class BookingCard extends StatelessWidget {
     this.onOpenCancel,
     this.onRebook,
     this.onOpenReview,
+    this.onOpenInvoice,
   });
 
   @override
@@ -536,6 +540,32 @@ class BookingCard extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // Nút xem Hóa đơn VAT điện tử (khi đơn đã thanh toán hoặc có VAT)
+                if (booking.payment.hasVatInvoice || booking.payment.isPaid)
+                  OutlinedButton.icon(
+                    onPressed: onOpenInvoice ??
+                        () => context.push(
+                              AppRoutes.invoiceDetailPath(booking.bookingId),
+                            ),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                    label: const Text('Hóa đơn VAT'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF047857),
+                      side: const BorderSide(color: Color(0xFF6EE7B7)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
 
                 // Hành động cho đơn Sắp tới (Upcoming)
                 if (isUpcoming) ...[

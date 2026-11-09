@@ -368,7 +368,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(child: SizedBox.shrink()),
+            Expanded(
+              child: ProfileShortcutCard(
+                icon: Icons.receipt_long_outlined,
+                label: 'Hóa đơn & GD',
+                onTap: () => context.push(AppRoutes.invoices),
+              ),
+            ),
           ],
         ),
       ],
