@@ -54,6 +54,7 @@ class TravelJournalScreen extends ConsumerWidget {
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AvoraTheme.primaryNavy,
         foregroundColor: Colors.white,
