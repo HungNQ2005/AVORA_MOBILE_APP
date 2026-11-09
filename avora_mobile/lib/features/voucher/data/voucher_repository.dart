@@ -30,7 +30,7 @@ class VoucherRepository {
       }
 
       final response = await _dio.get(
-        '/customer/coupons',
+        '/coupons',
         queryParameters: queryParams,
       );
 
