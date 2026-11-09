@@ -289,13 +289,19 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 right: 10,
                 child: InkWell(
                   onTap: () {
-                    ref
-                        .read(homeProvider.notifier)
-                        .toggleFavorite(hotel.hotelId);
-                    showHomeSnackBar(
-                      context,
-                      'Đã xóa ${hotel.name} khỏi danh sách yêu thích',
-                    );
+                    final hotelName = hotel.name;
+                    final hotelId = hotel.hotelId;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        ref
+                            .read(homeProvider.notifier)
+                            .toggleFavorite(hotelId);
+                        showHomeSnackBar(
+                          context,
+                          'Đã xóa $hotelName khỏi danh sách yêu thích',
+                        );
+                      }
+                    });
                   },
                   child: Container(
                     padding: const EdgeInsets.all(7),
@@ -497,11 +503,15 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              final ids = List<String>.from(ref.read(homeProvider).favorites);
-              for (final id in ids) {
-                ref.read(homeProvider.notifier).toggleFavorite(id);
-              }
-              showHomeSnackBar(context, 'Đã xóa toàn bộ danh sách yêu thích.');
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  final ids = List<String>.from(ref.read(homeProvider).favorites);
+                  for (final id in ids) {
+                    ref.read(homeProvider.notifier).toggleFavorite(id);
+                  }
+                  showHomeSnackBar(context, 'Đã xóa toàn bộ danh sách yêu thích.');
+                }
+              });
             },
             child: const Text(
               'Xóa tất cả',
