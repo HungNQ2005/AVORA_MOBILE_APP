@@ -1,3 +1,13 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC1: Đăng ký tài khoản khách hàng mới
+ *   - UC2: Đăng nhập hệ thống
+ *   - UC3: Xác thực trạng thái email tài khoản
+ * Description: State Management quản lý trạng thái xác thực người dùng (Riverpod StateNotifier).
+ */
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';

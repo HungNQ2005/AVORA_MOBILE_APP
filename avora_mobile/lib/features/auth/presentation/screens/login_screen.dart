@@ -1,3 +1,13 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC2: Đăng nhập hệ thống
+ *   - UC3: Xác thực trạng thái email tài khoản (Chặn đăng nhập khi chưa kích hoạt email)
+ *   - UC30: Xử lý hiển thị thông báo khi tài khoản đã bị khóa (DEACTIVATED)
+ * Description: Màn hình đăng nhập hệ thống, kiểm soát trạng thái tài khoản đa tầng.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

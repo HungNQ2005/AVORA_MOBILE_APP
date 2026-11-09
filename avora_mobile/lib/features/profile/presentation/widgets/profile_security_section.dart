@@ -1,3 +1,12 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC7: Đổi mật khẩu tài khoản
+ *   - UC30: Yêu cầu khóa tài khoản
+ * Description: Widget hiển thị giao diện đổi mật khẩu và nút kích hoạt quy trình khóa tài khoản.
+ */
+
 import 'package:flutter/material.dart';
 import 'profile_widgets.dart';
 

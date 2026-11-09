@@ -13,6 +13,8 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/booking/presentation/screens/booking_guest_info_screen.dart';
 import '../../features/booking/presentation/screens/booking_detail_screen.dart';
 import '../../features/booking/data/models/booking_guest_info_args.dart';
+import '../../features/payment/presentation/screens/payment_qr_screen.dart';
+import '../../features/payment/presentation/screens/payment_success_screen.dart';
 import 'package:avora_mobile/features/travel_journal/presentation/screens/travel_journal_screen.dart';
 import 'package:avora_mobile/features/travel_essentials/presentation/screens/travel_essentials_screen.dart';
 
@@ -29,6 +31,11 @@ class AppRoutes {
   static const String myBooking = '/my-bookings';
   static const String bookingDetail = '/booking-detail/:id';
   static String bookingDetailPath(String id) => '/booking-detail/$id';
+  static const String paymentQr = '/payment/:bookingId';
+  static String paymentQrPath(String bookingId) => '/payment/$bookingId';
+  static const String paymentSuccess = '/payment/success/:bookingId';
+  static String paymentSuccessPath(String bookingId) =>
+      '/payment/success/$bookingId';
   static const String profile = '/profile';
   static const String hotelSearch = '/hotels';
   static const String bookingGuestInfo = '/booking/guest-info';
@@ -156,6 +163,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           return BookingDetailScreen(bookingId: id);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.paymentSuccess,
+        name: 'payment_success',
+        builder: (context, state) {
+          final bookingId = state.pathParameters['bookingId'] ?? '';
+          return PaymentSuccessScreen(bookingId: bookingId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.paymentQr,
+        name: 'payment_qr',
+        builder: (context, state) {
+          final bookingId = state.pathParameters['bookingId'] ?? '';
+          return PaymentQrScreen(bookingId: bookingId);
         },
       ),
       GoRoute(
