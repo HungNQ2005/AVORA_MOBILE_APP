@@ -74,13 +74,16 @@ class _ErrorInterceptor extends Interceptor {
     final dynamic responseData = response?.data;
 
     String? rawMessage;
+    String? rawCode;
     if (responseData is Map) {
       rawMessage = responseData['message']?.toString();
+      rawCode = responseData['code']?.toString();
     } else if (responseData is String) {
       try {
         final dynamic decoded = jsonDecode(responseData);
         if (decoded is Map) {
           rawMessage = decoded['message']?.toString();
+          rawCode = decoded['code']?.toString();
         }
       } catch (_) {
         rawMessage = responseData;
@@ -97,7 +100,7 @@ class _ErrorInterceptor extends Interceptor {
         error: ApiException(
           message: friendlyMessage,
           statusCode: response?.statusCode,
-          code: rawMessage,
+          code: rawCode ?? rawMessage,
         ),
       ),
     );

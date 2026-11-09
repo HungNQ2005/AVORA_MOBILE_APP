@@ -1,3 +1,12 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC7: Đổi mật khẩu tài khoản
+ *   - UC30: Yêu cầu khóa tài khoản
+ * Description: Repository xử lý các API hồ sơ cá nhân, đổi mật khẩu và quy trình khóa tài khoản OTP.
+ */
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:avora_mobile/core/network/api_client.dart';

@@ -1,3 +1,10 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Case: UC4 - Quên mật khẩu và đặt lại mật khẩu
+ * Description: Modal BottomSheet gửi yêu cầu liên kết đặt lại mật khẩu qua email.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
