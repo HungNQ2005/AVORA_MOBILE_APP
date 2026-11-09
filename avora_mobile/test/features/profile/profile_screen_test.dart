@@ -133,4 +133,34 @@ void main() {
     expect(find.text('Mật khẩu xác nhận không khớp.'), findsOneWidget);
     expect(repository.changedCurrentPassword, isNull);
   });
+
+  testWidgets('displays Mã Khuyến Mãi button between Yêu thích and Đặt chỗ', (
+    tester,
+  ) async {
+    useMobileViewport(tester);
+    final repository = _FakeProfileRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [profileRepositoryProvider.overrideWithValue(repository)],
+        child: const MaterialApp(home: ProfileScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final favoriteFinder = find.text('Yêu thích');
+    final voucherFinder = find.text('Mã Khuyến Mãi');
+    final bookingFinder = find.text('Đặt chỗ');
+
+    expect(favoriteFinder, findsOneWidget);
+    expect(voucherFinder, findsOneWidget);
+    expect(bookingFinder, findsOneWidget);
+
+    // Verify ordering in layout: Yêu thích (left) -> Mã Khuyến Mãi (middle) -> Đặt chỗ (right)
+    final favX = tester.getTopLeft(favoriteFinder).dx;
+    final voucherX = tester.getTopLeft(voucherFinder).dx;
+    final bookingX = tester.getTopLeft(bookingFinder).dx;
+
+    expect(favX < voucherX, isTrue);
+    expect(voucherX < bookingX, isTrue);
+  });
 }

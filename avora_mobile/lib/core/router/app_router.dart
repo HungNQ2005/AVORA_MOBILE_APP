@@ -13,8 +13,10 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/booking/presentation/screens/booking_guest_info_screen.dart';
 import '../../features/booking/presentation/screens/booking_detail_screen.dart';
 import '../../features/booking/data/models/booking_guest_info_args.dart';
+import '../../features/voucher/presentation/screens/voucher_wallet_screen.dart';
 import 'package:avora_mobile/features/travel_journal/presentation/screens/travel_journal_screen.dart';
 import 'package:avora_mobile/features/travel_essentials/presentation/screens/travel_essentials_screen.dart';
+
 
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
@@ -30,6 +32,7 @@ class AppRoutes {
   static const String bookingDetail = '/booking-detail/:id';
   static String bookingDetailPath(String id) => '/booking-detail/$id';
   static const String profile = '/profile';
+  static const String voucherWallet = '/voucher-wallet';
   static const String hotelSearch = '/hotels';
   static const String bookingGuestInfo = '/booking/guest-info';
   static const String travelJournal = '/travel-journal';
@@ -129,6 +132,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profile,
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.voucherWallet,
+        name: 'voucher_wallet',
+        builder: (context, state) => const VoucherWalletScreen(),
       ),
       GoRoute(
         path: AppRoutes.hotelSearch,
