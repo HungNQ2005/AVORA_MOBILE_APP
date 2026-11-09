@@ -38,6 +38,7 @@ class BookingCard extends StatelessWidget {
     final isUpcoming = booking.category == 'upcoming';
     final isCompleted = booking.category == 'completed';
     final isCancelled = booking.category == 'cancelled';
+    final cancelReason = booking.cancellationReason ?? booking.refund?.reason;
     final statusCode = (booking.bookingStatusCd ?? booking.statusCodeName)
         .trim()
         .toUpperCase();
@@ -387,37 +388,113 @@ class BookingCard extends StatelessWidget {
                   ],
                 ),
 
-                // Thông tin hoàn tiền nếu bị hủy
-                if (isCancelled && booking.refund != null) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFFECACA)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.assignment_return_outlined,
-                          size: 16,
-                          color: Color(0xFFDC2626),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${booking.refund?.refundStatusLabel ?? "Đang xử lý hoàn tiền"}: ${currency.format(booking.refund?.refundAmount ?? 0)} ₫',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFB91C1C),
+                // Thông tin lý do hủy và hoàn tiền nếu đơn đã hủy
+                if (isCancelled) ...[
+                  if (cancelReason != null && cancelReason.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            size: 15,
+                            color: Color(0xFFDC2626),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Lý do hủy: ',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF991B1B),
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: cancelReason,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.normal,
+                                      color: Color(0xFF7F1D1D),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
+                  if (booking.refund != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.assignment_return_outlined,
+                                size: 16,
+                                color: Color(0xFF16A34A),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Số tiền hoàn lại: ${currency.format(booking.refund?.refundAmount ?? 0)} ₫',
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF15803D),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Mã tham chiếu: ${booking.refund?.gatewayRefundRef ?? "Chưa có"} • Trạng thái: ${booking.refund?.refundStatusLabel ?? booking.refund?.refundStatusCd ?? "Đang xử lý"}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Text(
+                        'Đơn đặt phòng đã hủy',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
 
                 const SizedBox(height: 14),

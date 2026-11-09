@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/models/bank_model.dart';
 import '../../data/models/booking_item_model.dart';
 import '../../data/repositories/my_booking_repository.dart';
 
@@ -293,10 +294,18 @@ class MyBookingNotifier extends StateNotifier<MyBookingState> {
     }
   }
 
-  /// Hủy đơn đặt phòng
+  /// Lấy danh sách ngân hàng hỗ trợ hoàn tiền
+  Future<List<BankModel>> fetchRefundBanks() => _repository.fetchRefundBanks();
+
+  /// Hủy đơn đặt phòng (hỗ trợ phân nhánh hủy có hoàn tiền và không hoàn tiền)
   Future<bool> cancelBooking(
     String bookingId, {
     required String reason,
+    String? bankCd,
+    String? bankName,
+    String? bankBin,
+    String? accountNumber,
+    String? accountHolder,
   }) async {
     state = state.copyWith(
       isActionLoading: true,
@@ -308,6 +317,11 @@ class MyBookingNotifier extends StateNotifier<MyBookingState> {
       final message = await _repository.cancelBooking(
         bookingId,
         reason: reason,
+        bankCd: bankCd,
+        bankName: bankName,
+        bankBin: bankBin,
+        accountNumber: accountNumber,
+        accountHolder: accountHolder,
       );
 
       state = state.copyWith(

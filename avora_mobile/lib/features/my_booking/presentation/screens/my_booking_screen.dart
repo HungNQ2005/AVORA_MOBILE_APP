@@ -97,15 +97,36 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
 
   Future<void> _cancelBooking(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
+    final authState = ref.read(authNotifierProvider);
+    final currentUser = authState is AuthSuccess ? authState.user : null;
+
     final cancelled = await CancelBookingModal.show(
       context,
       booking: booking,
-      onConfirmCancel: ({required String reason}) =>
-          notifier.cancelBooking(booking.bookingId, reason: reason),
+      user: currentUser,
+      onConfirmCancel: ({
+        required String reason,
+        String? bankCd,
+        String? bankName,
+        String? bankBin,
+        String? accountNumber,
+        String? accountHolder,
+      }) =>
+          notifier.cancelBooking(
+        booking.bookingId,
+        reason: reason,
+        bankCd: bankCd,
+        bankName: bankName,
+        bankBin: bankBin,
+        accountNumber: accountNumber,
+        accountHolder: accountHolder,
+      ),
     );
 
     if (cancelled == true && mounted) {
-      _showMessage('Đã hủy đơn đặt phòng thành công!');
+      final successMsg =
+          ref.read(myBookingNotifierProvider).actionSuccessMessage;
+      _showMessage(successMsg ?? 'Đã hủy đơn đặt phòng thành công!');
     }
   }
 
