@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
@@ -10,17 +11,19 @@ import '../../features/hotels/presentation/screens/hotel_detail_screen.dart';
 import '../../features/hotels/presentation/screens/hotel_search_screen.dart';
 import '../../features/my_booking/presentation/screens/my_booking_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/support/presentation/screens/support_screen.dart';
 import '../../features/booking/presentation/screens/booking_guest_info_screen.dart';
 import '../../features/booking/presentation/screens/booking_detail_screen.dart';
 import '../../features/booking/data/models/booking_guest_info_args.dart';
 import '../../features/payment/presentation/screens/payment_qr_screen.dart';
 import '../../features/payment/presentation/screens/payment_success_screen.dart';
 import '../../features/voucher/presentation/screens/voucher_wallet_screen.dart';
+
 import 'package:avora_mobile/features/travel_journal/presentation/screens/travel_journal_screen.dart';
 import 'package:avora_mobile/features/travel_essentials/presentation/screens/travel_essentials_screen.dart';
+
 import '../../features/invoice/presentation/screens/invoice_list_screen.dart';
 import '../../features/invoice/presentation/screens/invoice_detail_screen.dart';
-
 
 import 'package:avora_mobile/features/hotels/data/models/hotel_filter_params.dart';
 
@@ -41,6 +44,7 @@ class AppRoutes {
   static String paymentSuccessPath(String bookingId) =>
       '/payment/success/$bookingId';
   static const String profile = '/profile';
+  static const String support = '/support';
   static const String voucherWallet = '/voucher-wallet';
   static const String hotelSearch = '/hotels';
   static const String bookingGuestInfo = '/booking/guest-info';
@@ -64,16 +68,13 @@ class RouterNotifier extends ChangeNotifier {
   RouterNotifier(this._ref) {
     _isLoggedIn = _ref.read(authNotifierProvider) is AuthSuccess;
 
-    _ref.listen<AuthState>(
-      authNotifierProvider,
-      (previous, next) {
-        final newIsLoggedIn = next is AuthSuccess;
-        if (_isLoggedIn != newIsLoggedIn) {
-          _isLoggedIn = newIsLoggedIn;
-          notifyListeners();
-        }
-      },
-    );
+    _ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      final newIsLoggedIn = next is AuthSuccess;
+      if (_isLoggedIn != newIsLoggedIn) {
+        _isLoggedIn = newIsLoggedIn;
+        notifyListeners();
+      }
+    });
   }
 
   bool get isLoggedIn => _isLoggedIn;
@@ -121,6 +122,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.home,
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.support,
+        name: 'support',
+        builder: (context, state) => const SupportScreen(),
       ),
       GoRoute(
         path: AppRoutes.favorites,

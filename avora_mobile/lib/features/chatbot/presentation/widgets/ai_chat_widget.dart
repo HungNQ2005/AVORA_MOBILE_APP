@@ -47,7 +47,8 @@ class AiChatFab extends ConsumerWidget {
           child: InkWell(
             key: const Key('avora-ai-chat-fab'),
             customBorder: const CircleBorder(),
-            onTap: () => _open(ref),
+            onTap: () =>
+                openAiChat(ProviderScope.containerOf(context, listen: false)),
             child: const Icon(
               Icons.chat_bubble_rounded,
               color: Colors.white,
@@ -59,24 +60,22 @@ class AiChatFab extends ConsumerWidget {
     );
   }
 
-  void _open(WidgetRef ref) {
-    final ctx = rootNavigatorKey.currentContext;
-    if (ctx == null) return;
-    
-    // Đánh dấu popup đã mở để ẩn nút FAB
-    ref.read(chatProvider.notifier).setOpen(true);
+}
 
-    showModalBottomSheet<void>(
-      context: ctx,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const AiChatPanel(),
-    ).whenComplete(() {
-      // Khi đóng bottom sheet (bằng nút X, vuốt xuống, bấm ra ngoài), hiện lại nút FAB
-      ref.read(chatProvider.notifier).setOpen(false);
-    });
-  }
+void openAiChat(ProviderContainer container) {
+  final context = rootNavigatorKey.currentContext;
+  if (context == null || container.read(chatProvider).isOpen) return;
+
+  container.read(chatProvider.notifier).setOpen(true);
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const AiChatPanel(),
+  ).whenComplete(() {
+    container.read(chatProvider.notifier).setOpen(false);
+  });
 }
 
 /// Nội dung popup chat.

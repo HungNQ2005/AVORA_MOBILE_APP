@@ -35,14 +35,16 @@ class InteractiveMapBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    const Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Icon(
                           Icons.explore_outlined,
                           size: 15,
                           color: Color(0xFF0066FF),
                         ),
-                        SizedBox(width: 4),
                         Text(
                           'BẢN ĐỒ DU LỊCH TƯƠNG TÁC',
                           style: TextStyle(

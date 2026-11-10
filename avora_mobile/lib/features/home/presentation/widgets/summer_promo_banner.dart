@@ -33,7 +33,10 @@ class SummerPromoBanner extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding:
@@ -52,7 +55,6 @@ class SummerPromoBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               const Text(
                 'Tiết kiệm tối thiểu 15%',
                 style: TextStyle(
