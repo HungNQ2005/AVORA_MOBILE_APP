@@ -1,3 +1,12 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC1: Đăng ký tài khoản khách hàng mới
+ *   - UC2: Đăng nhập hệ thống
+ * Description: Data Transfer Objects (DTO) và Model biểu diễn thông tin người dùng và phản hồi xác thực.
+ */
+
 import 'package:equatable/equatable.dart';
 
 // ─── Sign In Response ─────────────────────────────────────────────────────────

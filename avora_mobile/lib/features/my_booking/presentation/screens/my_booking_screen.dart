@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +27,31 @@ class MyBookingScreen extends ConsumerStatefulWidget {
 
 class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
   bool _showHistory = false;
+  Timer? _countdownTimer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _now = DateTime.now();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handlePayNow(BookingItemModel booking) async {
+    await context.push(AppRoutes.paymentQrPath(booking.bookingId));
+    if (!mounted) return;
+    ref.read(myBookingNotifierProvider.notifier).loadBookings(silent: true);
+  }
 
   Future<void> _openVoucher(BookingItemModel booking) async {
     final notifier = ref.read(myBookingNotifierProvider.notifier);
@@ -454,6 +481,8 @@ class _MyBookingScreenState extends ConsumerState<MyBookingScreen> {
     return BookingCard(
       key: ValueKey(booking.bookingId),
       booking: booking,
+      currentTime: _now,
+      onPayNow: () => _handlePayNow(booking),
       onOpenDetails: () =>
           context.push(AppRoutes.bookingDetailPath(booking.bookingId)),
       onOpenVoucher: () => _openVoucher(booking),

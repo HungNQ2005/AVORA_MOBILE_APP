@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/router/app_router.dart';
 
+import '../../data/models/booking_countdown_helper.dart';
 import '../../data/models/booking_item_model.dart';
 
 /// Card hiển thị thông tin chi tiết một đơn đặt phòng
 /// Thiết kế đồng bộ chuẩn với các BookingCard trên Web OTA Avora
 class BookingCard extends StatelessWidget {
   final BookingItemModel booking;
+  final DateTime? currentTime;
   final VoidCallback? onOpenDetails;
   final VoidCallback onOpenVoucher;
+  final VoidCallback? onPayNow;
   final VoidCallback? onOpenEditGuest;
   final VoidCallback? onOpenDateChange;
   final VoidCallback? onOpenCancel;
@@ -22,8 +25,10 @@ class BookingCard extends StatelessWidget {
   const BookingCard({
     super.key,
     required this.booking,
+    this.currentTime,
     this.onOpenDetails,
     required this.onOpenVoucher,
+    this.onPayNow,
     this.onOpenEditGuest,
     this.onOpenDateChange,
     this.onOpenCancel,
@@ -43,6 +48,17 @@ class BookingCard extends StatelessWidget {
         .trim()
         .toUpperCase();
     final canReview = ['2', 'CFM'].contains(statusCode);
+    final isPendingUnpaid = !booking.payment.isPaid &&
+        (booking.statusBadgeVariant == 'amber' ||
+            booking.statusBadgeVariant == 'pending' ||
+            statusCode == 'PND' ||
+            statusCode == '1');
+    final countdown = isPendingUnpaid && (booking.createdAt ?? '').isNotEmpty
+        ? BookingCountdownHelper.getCountdown(
+            createdAtStr: booking.createdAt!,
+            currentTime: currentTime ?? DateTime.now(),
+          )
+        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -123,10 +139,59 @@ class BookingCard extends StatelessWidget {
                   ),
                 ),
 
-                // Badge trạng thái
-                _StatusBadge(
-                  statusName: booking.statusName,
-                  variant: booking.statusBadgeVariant,
+                // Badge trạng thái + Đếm ngược 10 phút
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _StatusBadge(
+                      statusName: booking.statusName,
+                      variant: booking.statusBadgeVariant,
+                    ),
+                    if (countdown != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: countdown.expired
+                              ? const Color(0xFFFEF2F2)
+                              : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: countdown.expired
+                                ? const Color(0xFFFECACA)
+                                : const Color(0xFFFDE68A),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.timer_outlined,
+                              size: 12,
+                              color: countdown.expired
+                                  ? const Color(0xFFDC2626)
+                                  : const Color(0xFFB45309),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              countdown.label,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: countdown.expired
+                                    ? const Color(0xFFDC2626)
+                                    : const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -573,6 +638,35 @@ class BookingCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (isPendingUnpaid &&
+                    (countdown == null || !countdown.expired) &&
+                    onPayNow != null)
+                  ElevatedButton.icon(
+                    onPressed: onPayNow,
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+                    label: Text(
+                      countdown != null
+                          ? 'Thanh toán ngay (${countdown.label})'
+                          : 'Thanh toán ngay',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
                 if (onOpenDetails != null)
                   OutlinedButton.icon(
                     onPressed: onOpenDetails,

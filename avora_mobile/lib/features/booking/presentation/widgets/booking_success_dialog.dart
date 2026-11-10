@@ -375,6 +375,39 @@ class _BookingSuccessDialogState extends State<BookingSuccessDialog> {
               const SizedBox(height: 20),
 
               // Nút hành động
+              if (countdown == null || !countdown.expired) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(
+                        AppRoutes.paymentQrPath(widget.booking.bookingId),
+                      );
+                    },
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 19),
+                    label: Text(
+                      countdown != null
+                          ? 'Thanh toán ngay (${countdown.label})'
+                          : 'Thanh toán ngay (10 phút)',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

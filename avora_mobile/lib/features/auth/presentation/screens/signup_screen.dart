@@ -1,3 +1,12 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC1: Đăng ký tài khoản khách hàng mới
+ *   - UC3: Xác thực trạng thái email tài khoản (Thông báo kích hoạt sau đăng ký)
+ * Description: Màn hình đăng ký tài khoản khách hàng mới, validate dữ liệu và điều hướng kích hoạt email.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

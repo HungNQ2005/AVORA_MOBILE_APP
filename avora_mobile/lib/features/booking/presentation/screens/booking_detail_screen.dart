@@ -100,7 +100,7 @@ class BookingDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // 7. Các nút tác vụ nhanh phía dưới (Bottom Actions)
-                _buildBottomButtons(context, booking),
+                _buildBottomButtons(context, ref, booking),
                 const SizedBox(height: 20),
               ],
             ),
@@ -865,9 +865,41 @@ class BookingDetailScreen extends ConsumerWidget {
   }
 
   // ─── 7. Các nút tác vụ ───────────────────────────────────────────────────
-  Widget _buildBottomButtons(BuildContext context, BookingDetailModel booking) {
+  Widget _buildBottomButtons(
+    BuildContext context,
+    WidgetRef ref,
+    BookingDetailModel booking,
+  ) {
+    final canPayNow =
+        !booking.isPaid && booking.statusBadgeVariant == 'pending';
+
     return Column(
       children: [
+        if (canPayNow) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await context.push(AppRoutes.paymentQrPath(booking.bookingId));
+                ref.invalidate(bookingDetailProvider(bookingId));
+              },
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: const Text(
+                'Thanh toán ngay (VietQR)',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF059669),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(

@@ -14,6 +14,7 @@ class AvoraTheme {
   static const Color badgeGold = Color(0xFFFBBE08);
   static const Color successGreen = Color(0xFF10B981);
   static const Color checkGreen = Color(0xFF008009);
+  static const Color warningAmber = Color(0xFFD97706);
   static const Color errorRed = Color(0xFFEF4444);
   static const Color heartRed = Color(0xFFFF4D4F);
 

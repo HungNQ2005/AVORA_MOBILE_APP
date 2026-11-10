@@ -1,3 +1,13 @@
+/**
+ * Author: Nguyen Quoc Hung (HungNQCE190870)
+ * Account: HungNQCE190870
+ * Use Cases: 
+ *   - UC1: Đăng ký tài khoản khách hàng mới
+ *   - UC2: Đăng nhập hệ thống
+ *   - UC4: Quên mật khẩu và đặt lại mật khẩu
+ * Description: Tầng Data Repository xử lý gọi HTTP API Auth và lưu trữ Token mã hóa.
+ */
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
