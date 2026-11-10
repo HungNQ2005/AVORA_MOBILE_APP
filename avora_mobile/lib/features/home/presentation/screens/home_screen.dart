@@ -22,11 +22,16 @@ class HomeScreen extends ConsumerWidget {
 
     // Lấy thông tin người dùng từ AuthSuccess
     final user = authState is AuthSuccess ? authState.user : null;
-    final userName = user?.fullName ?? user?.email ?? 'Quý khách';
+    final userName = user?.fullName?.trim().isNotEmpty == true
+        ? user!.fullName!.trim()
+        : user?.email ?? 'Quý khách';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
-      appBar: HomeAppBar(userName: userName),
+      appBar: HomeAppBar(
+        userName: userName,
+        avatarUrl: user?.avatarUrl,
+      ),
       body: RefreshIndicator(
         color: const Color(0xFF003580),
         onRefresh: () => ref.read(homeProvider.notifier).refresh(),
