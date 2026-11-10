@@ -238,6 +238,8 @@ class BookingPaymentModel extends Equatable {
   final String? gatewayRefId;
   final String? paidAt;
   final bool hasVatInvoice;
+  final bool hasPartialPayment;
+  final num totalPaidAmount;
 
   const BookingPaymentModel({
     this.isPaid = false,
@@ -248,19 +250,26 @@ class BookingPaymentModel extends Equatable {
     this.gatewayRefId,
     this.paidAt,
     this.hasVatInvoice = false,
+    this.hasPartialPayment = false,
+    this.totalPaidAmount = 0,
   });
 
   factory BookingPaymentModel.fromJson(Map<String, dynamic> json) {
+    final rawAmountPaid = (json['amount_paid'] as num?) ?? 0;
+    final rawTotalPaid =
+        (json['total_paid_amount'] as num?) ?? rawAmountPaid;
     return BookingPaymentModel(
       isPaid: json['is_paid'] == true,
       transactionId: json['transaction_id']?.toString(),
-      amountPaid: (json['amount_paid'] as num?) ?? 0,
+      amountPaid: rawAmountPaid,
       paymentMethodCd: json['payment_method_cd']?.toString(),
       paymentMethod:
           (json['payment_method'] ?? 'Chưa thanh toán').toString(),
       gatewayRefId: json['gateway_ref_id']?.toString(),
       paidAt: json['paid_at']?.toString(),
       hasVatInvoice: json['has_vat_invoice'] == true,
+      hasPartialPayment: json['has_partial_payment'] == true,
+      totalPaidAmount: rawTotalPaid,
     );
   }
 
@@ -274,6 +283,8 @@ class BookingPaymentModel extends Equatable {
         gatewayRefId,
         paidAt,
         hasVatInvoice,
+        hasPartialPayment,
+        totalPaidAmount,
       ];
 }
 
@@ -346,6 +357,7 @@ class BookingItemModel extends Equatable {
   final bool canEdit;
   final BookingRefundModel? refund;
   final BookingCouponModel? coupon;
+  final String? cancellationReason;
 
   const BookingItemModel({
     required this.bookingId,
@@ -371,6 +383,7 @@ class BookingItemModel extends Equatable {
     this.canEdit = false,
     this.refund,
     this.coupon,
+    this.cancellationReason,
   });
 
   factory BookingItemModel.fromJson(Map<String, dynamic> json) {
@@ -415,6 +428,7 @@ class BookingItemModel extends Equatable {
               Map<String, dynamic>.from(json['coupon'] as Map),
             )
           : null,
+      cancellationReason: json['cancellation_reason']?.toString(),
     );
   }
 
@@ -443,6 +457,7 @@ class BookingItemModel extends Equatable {
         canEdit,
         refund,
         coupon,
+        cancellationReason,
       ];
 }
 

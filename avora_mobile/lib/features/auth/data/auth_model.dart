@@ -59,7 +59,11 @@ class UserModel extends Equatable {
   final String? role;
   final String? accountStatus;
   final String? avatarUrl;
-
+  final String? refundBankCd;
+  final String? refundAccountNumber;
+  final String? refundAccountHolder;
+  final String? refundBankCodeName;
+  final String? refundBankName;
   const UserModel({
     required this.userId,
     required this.email,
@@ -68,6 +72,11 @@ class UserModel extends Equatable {
     this.role,
     this.accountStatus,
     this.avatarUrl,
+    this.refundBankCd,
+    this.refundAccountNumber,
+    this.refundAccountHolder,
+    this.refundBankCodeName,
+    this.refundBankName,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -79,6 +88,11 @@ class UserModel extends Equatable {
       role: (json['role_code_name'] ?? json['role'] ?? json['role_cd'])?.toString(),
       accountStatus: json['account_status'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      refundBankCd: (json['refund_bank_cd'] ?? json['refundBankCd'])?.toString(),
+      refundAccountNumber: (json['refund_account_number'] ?? json['refundAccountNumber'])?.toString(),
+      refundAccountHolder: (json['refund_account_holder'] ?? json['refundAccountHolder'])?.toString(),
+      refundBankCodeName: (json['refund_bank_code_name'] ?? json['refundBankCodeName'])?.toString(),
+      refundBankName: (json['refund_bank_name'] ?? json['refundBankName'])?.toString(),
     );
   }
 
@@ -90,6 +104,11 @@ class UserModel extends Equatable {
         'role': role,
         'account_status': accountStatus,
         'avatar_url': avatarUrl,
+        'refund_bank_cd': refundBankCd,
+        'refund_account_number': refundAccountNumber,
+        'refund_account_holder': refundAccountHolder,
+        'refund_bank_code_name': refundBankCodeName,
+        'refund_bank_name': refundBankName,
       };
 
   @override
@@ -101,6 +120,11 @@ class UserModel extends Equatable {
         role,
         accountStatus,
         avatarUrl,
+        refundBankCd,
+        refundAccountNumber,
+        refundAccountHolder,
+        refundBankCodeName,
+        refundBankName,
       ];
 }
 

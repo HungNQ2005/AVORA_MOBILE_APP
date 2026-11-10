@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/booking_item_model.dart';
+import '../models/bank_model.dart';
 import '../models/booking_review_model.dart';
 
 /// Provider cung cấp MyBookingRepository
@@ -182,15 +183,69 @@ class MyBookingRepository {
     }
   }
 
+  /// Lấy danh sách ngân hàng hỗ trợ hoàn tiền từ `GET /api/bookings/banks` (fallback `/wallet/banks`)
+  Future<List<BankModel>> fetchRefundBanks() async {
+    try {
+      final response = await _dio.get('/bookings/banks');
+      final data = response.data;
+      if (data != null && data['data'] is List) {
+        final list = (data['data'] as List)
+            .whereType<Map>()
+            .map((e) => BankModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {
+      // Bỏ qua lỗi và thử fallback sang /wallet/banks
+    }
+
+    try {
+      final fallbackResponse = await _dio.get('/wallet/banks');
+      final data = fallbackResponse.data;
+      if (data != null && data['data'] is List) {
+        final list = (data['data'] as List)
+            .whereType<Map>()
+            .map((e) => BankModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {
+      // Trả về danh sách rỗng nếu cả hai đều thất bại
+    }
+
+    return const <BankModel>[];
+  }
+
   /// Hủy đơn đặt phòng từ `POST /api/bookings/:id/cancel`
   Future<String> cancelBooking(
     String bookingId, {
     required String reason,
+    String? bankCd,
+    String? bankName,
+    String? bankBin,
+    String? accountNumber,
+    String? accountHolder,
   }) async {
     try {
-      final payload = {
+      final payload = <String, dynamic>{
         'reason': reason.trim(),
       };
+
+      if (bankCd != null && bankCd.trim().isNotEmpty) {
+        payload['bank_cd'] = bankCd.trim();
+      }
+      if (bankName != null && bankName.trim().isNotEmpty) {
+        payload['bank_name'] = bankName.trim();
+      }
+      if (bankBin != null && bankBin.trim().isNotEmpty) {
+        payload['bank_bin'] = bankBin.trim();
+      }
+      if (accountNumber != null && accountNumber.trim().isNotEmpty) {
+        payload['account_number'] = accountNumber.trim();
+      }
+      if (accountHolder != null && accountHolder.trim().isNotEmpty) {
+        payload['account_holder'] = accountHolder.trim();
+      }
 
       final response = await _dio.post(
         '/bookings/$bookingId/cancel',
